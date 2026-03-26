@@ -4,10 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Performance_Assessment_System
+namespace Performance_Assessment_System.Common
 {
-    public class Class1
+    public class Common
     {
-            int a= 10;
     }
 }
