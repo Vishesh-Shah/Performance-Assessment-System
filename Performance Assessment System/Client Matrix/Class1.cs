@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Performance_Assessment_System.Client_Matrix
 {
-    internal class Class1
+    public class Class1
     {
     }
 }

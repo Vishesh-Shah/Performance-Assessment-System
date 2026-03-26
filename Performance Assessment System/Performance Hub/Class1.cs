@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Performance_Assessment_System.Performance_Hub
 {
-    internal class Class1
+    public class Class1
     {
     }
 }
