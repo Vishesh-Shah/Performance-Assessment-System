@@ -10,8 +10,8 @@ using System.Globalization;
 using System.Linq;
 using System.ServiceModel;
 using System.Text;
-
 namespace Inkey.MSCRM.Plugin_V9._0.Common
+
 {
   #region Structure
 
