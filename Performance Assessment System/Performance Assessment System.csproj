@@ -45,6 +45,7 @@
     <Compile Include="Common\Common.cs" />
     <Compile Include="Common\Plugin.cs" />
     <Compile Include="Performance Hub\Class1.cs" />
+    <Compile Include="Performance Hub\Demo\FileName.cs" />
     <Compile Include="Project Matrix\Class1.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
