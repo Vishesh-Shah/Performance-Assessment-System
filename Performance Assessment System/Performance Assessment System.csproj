@@ -43,12 +43,12 @@
   <ItemGroup>
     <Compile Include="Common\Common.cs" />
     <Compile Include="Common\Plugin.cs" />
+    <Compile Include="Project Matrix\Class1.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Client Matrix\" />
     <Folder Include="Performance Hub\" />
-    <Folder Include="Project Matrix\" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
