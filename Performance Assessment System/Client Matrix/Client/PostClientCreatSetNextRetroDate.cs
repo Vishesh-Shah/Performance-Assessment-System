@@ -1,71 +1,71 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Performance_Assessment_System.Common;
-
+using Microsoft.Xrm.Sdk;
+using Microsoft.Xrm.Sdk.Query;
+using Inkey.MSCRM.Plugin_V9._0.Common;
 
 namespace Performance_Assessment_System.Client_Matrix.Client
 {
-    public class PostClientCreatSetNextRetroDate :IPlugin
+    public class PostClientCreatSetNextRetroDate : IPlugin
     {
-        #region Public Methods
-
-        #region Execute
-        /// <summary>
-        /// </summary>
-        /// 
-        /// 
         public void Execute(IServiceProvider iServiceProvider)
         {
+            // ✅ Correct service initialization
+            IPluginExecutionContext context =
+                (IPluginExecutionContext)iServiceProvider.GetService(typeof(IPluginExecutionContext));
 
-            // Obtain the execution context from the service provider.
-            IPluginExecutionContext iPluginExecutionContext = (IPluginExecutionContext)iServiceProvider.GetService(typeof(IPluginExecutionContext));
+            IOrganizationServiceFactory factory =
+                (IOrganizationServiceFactory)iServiceProvider.GetService(typeof(IOrganizationServiceFactory));
 
-            // Obtain the organization service factory reference.
-            IOrganizationServiceFactory iOrganizationServiceFactory = (IOrganizationServiceFactory)iServiceProvider.GetService(typeof(IPluginExecutionContext));
+            ITracingService tracingService =
+                (ITracingService)iServiceProvider.GetService(typeof(ITracingService));
 
-            // Obtain the tracing service reference.
-            ITracingService iTracingService = (ITracingService)iServiceProvider.GetService(typeof(ITracingService));
-
-            // Obtain the organization service reference.
-            IOrganizationService iOrganizationService = iOrganizationServiceFactory.CreateOrganizationService(iPluginExecutionContext.UserId);
+            IOrganizationService service =
+                factory.CreateOrganizationService(context.UserId);
 
             try
             {
-                iTracingService.Trace("PostClientCreatSetNextRetroDate plugin execution started.");
+                tracingService.Trace("PostClientCreatSetNextRetroDate plugin execution started.");
 
-                if (Plugin.ValidateTargetAsEntity("ink_client", iPluginExecutionContext))
+                if (Plugin.ValidateTargetAsEntity("ink_client", context))
                 {
-                    Entity clientEntity = (Entity)iPluginExecutionContext.InputParameters["Target"];
+                    Entity target = (Entity)context.InputParameters["Target"];
 
-                    if (clientEntity != null)
+                    if (target != null)
                     {
-                        // Frequency and CreatedOn direct Target ma create time hamesha male j evu jaruri nathi
-                        // etle created record retrieve kariye
-                        Entity retrieveClient = iOrganizationService.Retrieve(
-                            Entities.CLIENT,
-                            clientEntity.Id,
-                            new ColumnSet("createdon", "ink_retrofrequency", "ink_nextretrodate")
-                        );
+                        // Retrieve full client record with required fields using helper method
+                        Entity clientEntity = Plugin.FetchEntityRecord("ink_client", target.Id,
+                            new ColumnSet("createdon", "ink_retrofrequency"), service);
 
-                        if (retrieveClient != null)
+                        if (clientEntity != null)
                         {
-                            if (retrieveClient.Contains("ink_retrofrequency") && retrieveClient["ink_retrofrequency"] != null)
+                            // ink_retrofrequency is Whole Number (int) - use GetAttributeValue<int>
+                            int frequencyDays = Plugin.GetAttributeValue<int>(clientEntity, "ink_retrofrequency");
+
+                            if (frequencyDays > 0)
                             {
-                                int frequency = retrieveClient.GetAttributeValue<int>("ink_retrofrequency");
+                                // Get created on date using helper method
+                                DateTime createdOn = Plugin.GetAttributeValue<DateTime>(clientEntity, "createdon");
 
-                                if (frequency > 0)
+                                // Step 1: Calculate next retro date = created on + frequency days
+                                DateTime nextRetroDate = createdOn.AddDays(frequencyDays);
+
+                                // Step 2: Apply weekend adjustment
+                                if (nextRetroDate.DayOfWeek == DayOfWeek.Saturday)
                                 {
-                                    DateTime createdOn = retrieveClient.GetAttributeValue<DateTime>("createdon");
-
-                                    Entity updateClient = new Entity(Entities.CLIENT);
-                                    updateClient.Id = retrieveClient.Id;
-                                    updateClient["ink_nextretrodate"] = createdOn.AddDays(frequency);
-
-                                    iOrganizationService.Update(updateClient);
+                                    // Saturday → move to Monday
+                                    nextRetroDate = nextRetroDate.AddDays(2);
                                 }
+                                else if (nextRetroDate.DayOfWeek == DayOfWeek.Sunday)
+                                {
+                                    // Sunday → move to Monday
+                                    nextRetroDate = nextRetroDate.AddDays(1);
+                                }
+
+                                // Update next retro date on client record using helper method
+                                Entity clientUpdateEntity = new Entity("ink_client");
+                                clientUpdateEntity.Id = clientEntity.Id;
+                                Plugin.AddAttribute(clientUpdateEntity, "ink_nextretrodate", nextRetroDate);
+                                service.Update(clientUpdateEntity);
                             }
                         }
                     }
@@ -73,12 +73,9 @@ namespace Performance_Assessment_System.Client_Matrix.Client
             }
             catch (Exception ex)
             {
+                Plugin.TraceLog("Error: " + ex.Message, tracingService);
                 throw new InvalidPluginExecutionException(ex.Message);
             }
         }
-        #endregion
-
-        #endregion
-
     }
 }
