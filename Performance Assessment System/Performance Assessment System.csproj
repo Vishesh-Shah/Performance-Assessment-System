@@ -124,6 +124,8 @@
   <ItemGroup>
     <Compile Include="Client Matrix\ClientRetro\PostClientRetroCreateUpdateSetNextRetroDate.cs" />
     <Compile Include="Client Matrix\Client\PostClientCreatSetNextRetroDate.cs" />
+    <Compile Include="Client Matrix\ProjectRetro\PostProjectRetroCreateUpdateSetNextRetroDate.cs" />
+    <Compile Include="Client Matrix\Project\PostProjectCreatSetNextRetroDate.cs" />
     <Compile Include="Common\Common.cs" />
     <Compile Include="Common\Plugin.cs" />
     <Compile Include="Performance Hub\Class1.cs" />

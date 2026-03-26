@@ -3,13 +3,13 @@ using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Query;
 using System;
 
-namespace Performance_Assessment_System.Client_Matrix.ClientRetro
+namespace Performance_Assessment_System.Client_Matrix.ProjectRetro
 {
-    public class PostClientRetroCreateUpdateSetNextRetroDate:IPlugin
+    public class PostProjectRetroCreateUpdateSetNextRetroDate: IPlugin
     {
         #region Variable Declaration
 
-        private const string preImageAlias = "PostClientRetroCreateUpdateSetNextRetroDatePreImage";
+        private const string preImageAlias = "PostProjectRetroCreateUpdateSetNextRetroDatePreImage";
 
         #endregion
 
@@ -17,8 +17,8 @@ namespace Performance_Assessment_System.Client_Matrix.ClientRetro
 
         #region Execute
         /// <summary>
-        /// On Client Retro Create or Update, gets conducted on date from target or pre image,
-        /// retrieves related client frequency days and updates Next Retro Date on Client record.
+        /// On Project Retro Create or Update, gets conducted on date from target or pre image,
+        /// retrieves related project frequency days and updates Next Retro Date on Project record.
         /// </summary>
         public void Execute(IServiceProvider iServiceProvider)
         {
@@ -36,34 +36,34 @@ namespace Performance_Assessment_System.Client_Matrix.ClientRetro
 
             try
             {
-                if (Plugin.ValidateTargetAsEntity("ink_clientretro", iPluginExecutionContext))
+                if (Plugin.ValidateTargetAsEntity("ink_projectretro", iPluginExecutionContext))
                 {
-                    Entity clientRetroEntity = (Entity)iPluginExecutionContext.InputParameters["Target"];
+                    Entity projectRetroEntity = (Entity)iPluginExecutionContext.InputParameters["Target"];
 
-                    // Get pre image for Update - to get conducted on and client lookup if not in target
-                    Entity clientRetroPreImage = Plugin.GetPreEntityImage(iPluginExecutionContext, preImageAlias);
+                    // Get pre image for Update - to get conducted on and project lookup if not in target
+                    Entity projectRetroPreImage = Plugin.GetPreEntityImage(iPluginExecutionContext, preImageAlias);
 
-                    if (clientRetroEntity != null)
+                    if (projectRetroEntity != null)
                     {
                         // Get conducted on from target or pre image using helper method
-                        DateTime conductedOn = Plugin.GetAttributeValue<DateTime>(clientRetroEntity, clientRetroPreImage, "ink_conductedon");
+                        DateTime conductedOn = Plugin.GetAttributeValue<DateTime>(projectRetroEntity, projectRetroPreImage, "ink_conductedon");
 
                         // Proceed only if conducted on is set
                         if (conductedOn != DateTime.MinValue)
                         {
-                            // Get client lookup from target or pre image using helper method
-                            EntityReference clientEntityReference = Plugin.GetAttributeValue<EntityReference>(clientRetroEntity, clientRetroPreImage, "ink_client");
+                            // Get project lookup from target or pre image using helper method
+                            EntityReference projectEntityReference = Plugin.GetAttributeValue<EntityReference>(projectRetroEntity, projectRetroPreImage, "ink_project");
 
-                            if (clientEntityReference != null)
+                            if (projectEntityReference != null)
                             {
-                                // Retrieve client record to get current frequency days
-                                Entity clientEntity = Plugin.FetchEntityRecord("ink_client", clientEntityReference.Id,
+                                // Retrieve project record to get current frequency days
+                                Entity projectEntity = Plugin.FetchEntityRecord("ink_project", projectEntityReference.Id,
                                     new ColumnSet("ink_retrofrequency"), iOrganizationService);
 
-                                if (clientEntity != null)
+                                if (projectEntity != null)
                                 {
-                                    // Get retro frequency days from client record
-                                    int frequencyDays = Plugin.GetAttributeValue<int>(clientEntity, "ink_retrofrequency");
+                                    // Get retro frequency days from project record
+                                    int frequencyDays = Plugin.GetAttributeValue<int>(projectEntity, "ink_retrofrequency");
 
                                     if (frequencyDays > 0)
                                     {
@@ -82,11 +82,11 @@ namespace Performance_Assessment_System.Client_Matrix.ClientRetro
                                             nextRetroDate = nextRetroDate.AddDays(1);
                                         }
 
-                                        // Update next retro date on client record
-                                        Entity clientUpdateEntity = new Entity("ink_client");
-                                        clientUpdateEntity.Id = clientEntityReference.Id;
-                                        Plugin.AddAttribute(clientUpdateEntity, "ink_nextretrodate", nextRetroDate);
-                                        iOrganizationService.Update(clientUpdateEntity);
+                                        // Update next retro date on project record
+                                        Entity projectUpdateEntity = new Entity("ink_project");
+                                        projectUpdateEntity.Id = projectEntityReference.Id;
+                                        Plugin.AddAttribute(projectUpdateEntity, "ink_nextretrodate", nextRetroDate);
+                                        iOrganizationService.Update(projectUpdateEntity);
                                     }
                                 }
                             }
