@@ -41,8 +41,13 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Class1.cs" />
+    <Compile Include="Client Matrix\Class1.cs" />
+    <Compile Include="Common\Common.cs" />
+    <Compile Include="Common\Plugin.cs" />
+    <Compile Include="Performance Hub\Class1.cs" />
+    <Compile Include="Project Matrix\Class1.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
