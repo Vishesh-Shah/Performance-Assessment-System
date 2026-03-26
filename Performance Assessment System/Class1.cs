@@ -8,5 +8,6 @@ namespace Performance_Assessment_System
 {
     public class Class1
     {
+            int a= 10;
     }
 }
