@@ -4,10 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Performance_Assessment_System.Performance_Hub
+namespace Performance_Assessment_System.Performance_Hub.Demo
 {
-    public class Class1
+    internal class FileName
     {
-        int a = 10;
     }
 }
