@@ -43,9 +43,14 @@ namespace JeetPlugins.Resource
                         EntityReference managerRef =
                             Plugin.GetAttributeValue<EntityReference>(resourceEntity, "ink_reportingmanager");
 
+                        
+                        EntityReference designationRef =
+                            Plugin.GetAttributeValue<EntityReference>(resourceEntity, "ink_designation");
+
                         if (!string.IsNullOrWhiteSpace(firstName) &&
                             !string.IsNullOrWhiteSpace(lastName) &&
-                            managerRef != null)
+                            managerRef != null &&
+                            designationRef != null) 
                         {
                             QueryExpression query = new QueryExpression("ink_resource");
                             query.ColumnSet = new ColumnSet(false);
@@ -53,17 +58,18 @@ namespace JeetPlugins.Resource
                             query.Criteria.AddCondition("ink_firstname", ConditionOperator.Equal, firstName);
                             query.Criteria.AddCondition("ink_lastname", ConditionOperator.Equal, lastName);
                             query.Criteria.AddCondition("ink_reportingmanager", ConditionOperator.Equal, managerRef.Id);
+                            query.Criteria.AddCondition("ink_designation", ConditionOperator.Equal, designationRef.Id);
 
                             EntityCollection result =
                                 iOrganizationService.RetrieveMultiple(query);
 
                             if (result != null && result.Entities.Count > 0)
                             {
-                                throw new InvalidPluginExecutionException("Duplicate Resource record found with same First Name, Last Name and Reporting Manager.");
+                                throw new InvalidPluginExecutionException("Duplicate Resource record found with same First Name, Last Name, Reporting Manager and Designation.");
                             }
                         }
 
-                        
+
                     }
                 }
             }
