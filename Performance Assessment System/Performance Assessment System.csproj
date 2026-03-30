@@ -125,6 +125,7 @@
     <Compile Include="Client Matrix\ClientRetro\PostClientRetroCreateCancelWorkFlow.cs" />
     <Compile Include="Client Matrix\ClientRetro\PostClientRetroCreateUpdateSetNextRetroDate.cs" />
     <Compile Include="Client Matrix\Client\PostClientCreatSetNextRetroDate.cs" />
+    <Compile Include="Client Matrix\ProjectRetro\PostProjectRetroCreateCancelWorkflow.cs" />
     <Compile Include="Client Matrix\ProjectRetro\PostProjectRetroCreateUpdateSetNextRetroDate.cs" />
     <Compile Include="Client Matrix\Project\PostProjectCreatSetNextRetroDate.cs" />
     <Compile Include="Common\Common.cs" />
