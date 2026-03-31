@@ -12,69 +12,52 @@ namespace Performance_Assessment_System.Resource
         #region Execute
         public void Execute(IServiceProvider iServiceProvider)
         {
-            IPluginExecutionContext iPluginExecutionContext =
+            IPluginExecutionContext context =
                 (IPluginExecutionContext)iServiceProvider.GetService(typeof(IPluginExecutionContext));
 
-            IOrganizationServiceFactory iOrganizationServiceFactory =
+            IOrganizationServiceFactory factory =
                 (IOrganizationServiceFactory)iServiceProvider.GetService(typeof(IOrganizationServiceFactory));
 
-            ITracingService iTracingService =
-                (ITracingService)iServiceProvider.GetService(typeof(ITracingService));
-
-            IOrganizationService iOrganizationService =
-                iOrganizationServiceFactory.CreateOrganizationService(iPluginExecutionContext.UserId);
+            IOrganizationService service =
+                factory.CreateOrganizationService(context.UserId);
 
             try
             {
-                if (Plugin.ValidateTargetAsEntity("ink_resource", iPluginExecutionContext))
+                if (Plugin.ValidateTargetAsEntity("ink_resource", context))
                 {
-                    Entity resourceEntity =
-                        (Entity)iPluginExecutionContext.InputParameters["Target"];
+                    Entity entity = (Entity)context.InputParameters["Target"];
 
-                    if (resourceEntity != null)
+                    if (entity != null)
                     {
-                        // ===== Logic Start =====
-
-                        string firstName =
-                            Plugin.GetAttributeValue<string>(resourceEntity, "ink_firstname");
-
-                        string lastName =
-                            Plugin.GetAttributeValue<string>(resourceEntity, "ink_lastname");
-
-                        EntityReference reportingManager =
-                            Plugin.GetAttributeValue<EntityReference>(resourceEntity, "ink_reportingmanager");
-
-                        EntityReference designation =
-                            Plugin.GetAttributeValue<EntityReference>(resourceEntity, "ink_designation");
-
-                        // ⚠️ Optional safety (best practice)
-                        if (string.IsNullOrWhiteSpace(firstName) ||
-                            string.IsNullOrWhiteSpace(lastName) ||
-                            reportingManager == null ||
-                            designation == null)
-                        {
-                            return; // skip duplicate check
-                        }
+                        string firstName = Plugin.GetAttributeValue<string>(entity, "ink_firstname");
+                        string lastName = Plugin.GetAttributeValue<string>(entity, "ink_lastname");
+                        EntityReference manager = Plugin.GetAttributeValue<EntityReference>(entity, "ink_reportingmanager");
+                        EntityReference designation = Plugin.GetAttributeValue<EntityReference>(entity, "ink_designation");
 
                         QueryExpression query = new QueryExpression("ink_resource");
                         query.ColumnSet = new ColumnSet(false);
                         query.TopCount = 1;
 
-                        // 🔥 STRICT MATCH (ALL 4 CONDITIONS)
+                        // 🔥 STRICT 4 FIELD MATCH
                         query.Criteria.AddCondition("ink_firstname", ConditionOperator.Equal, firstName);
                         query.Criteria.AddCondition("ink_lastname", ConditionOperator.Equal, lastName);
-                        query.Criteria.AddCondition("ink_reportingmanager", ConditionOperator.Equal, reportingManager.Id);
-                        query.Criteria.AddCondition("ink_designation", ConditionOperator.Equal, designation.Id);
 
-                        EntityCollection existingRecords =
-                            iOrganizationService.RetrieveMultiple(query);
+                        if (manager != null)
+                            query.Criteria.AddCondition("ink_reportingmanager", ConditionOperator.Equal, manager.Id);
+                        else
+                            return; // skip if incomplete
 
-                        if (existingRecords != null && existingRecords.Entities.Count > 0)
+                        if (designation != null)
+                            query.Criteria.AddCondition("ink_designation", ConditionOperator.Equal, designation.Id);
+                        else
+                            return;
+
+                        EntityCollection result = service.RetrieveMultiple(query);
+
+                        if (result.Entities.Count > 0)
                         {
                             Plugin.ThrowManualException("Duplicate Resource record already exists.");
                         }
-
-                        // ===== Logic End =====
                     }
                 }
             }
