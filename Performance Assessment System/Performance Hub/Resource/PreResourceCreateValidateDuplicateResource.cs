@@ -5,7 +5,7 @@ using System;
 
 namespace Performance_Assessment_System.Resource
 {
-    public class PreResourceCreateValidateDuplicateResource : IPlugin
+    public class PreResourceCreateValidateDuplicate : IPlugin
     {
         #region Public Methods
 
@@ -26,18 +26,14 @@ namespace Performance_Assessment_System.Resource
 
             try
             {
-                iTracingService.Trace("Plugin Execution Started: PreResourceCreateValidateDuplicateResource");
-
                 if (Plugin.ValidateTargetAsEntity("ink_resource", iPluginExecutionContext))
                 {
-                    iTracingService.Trace("Target is valid entity");
-
                     Entity resourceEntity =
                         (Entity)iPluginExecutionContext.InputParameters["Target"];
 
                     if (resourceEntity != null)
                     {
-                        iTracingService.Trace("Resource Entity is not null");
+                        // ===== Logic Start =====
 
                         string firstName =
                             Plugin.GetAttributeValue<string>(resourceEntity, "ink_firstname");
@@ -45,67 +41,42 @@ namespace Performance_Assessment_System.Resource
                         string lastName =
                             Plugin.GetAttributeValue<string>(resourceEntity, "ink_lastname");
 
-                        EntityReference managerRef =
+                        EntityReference reportingManager =
                             Plugin.GetAttributeValue<EntityReference>(resourceEntity, "ink_reportingmanager");
 
-                        EntityReference designationRef =
+                        EntityReference designation =
                             Plugin.GetAttributeValue<EntityReference>(resourceEntity, "ink_designation");
 
-                        iTracingService.Trace($"FirstName: {firstName}");
-                        iTracingService.Trace($"LastName: {lastName}");
-                        iTracingService.Trace($"ManagerRef: {(managerRef != null ? managerRef.Id.ToString() : "NULL")}");
-                        iTracingService.Trace($"DesignationRef: {(designationRef != null ? designationRef.Id.ToString() : "NULL")}");
+                        QueryExpression query = new QueryExpression("ink_resource");
+                        query.ColumnSet = new ColumnSet(false);
+                        query.TopCount = 1;
 
-                        if (!string.IsNullOrWhiteSpace(firstName) &&
-                            !string.IsNullOrWhiteSpace(lastName) &&
-                            managerRef != null &&
-                            designationRef != null)
-                        {
-                            iTracingService.Trace("All required fields are present. Building query...");
-
-                            QueryExpression query = new QueryExpression("ink_resource");
-                            query.ColumnSet = new ColumnSet(false);
-
+                        if (!string.IsNullOrWhiteSpace(firstName))
                             query.Criteria.AddCondition("ink_firstname", ConditionOperator.Equal, firstName);
+
+                        if (!string.IsNullOrWhiteSpace(lastName))
                             query.Criteria.AddCondition("ink_lastname", ConditionOperator.Equal, lastName);
-                            query.Criteria.AddCondition("ink_reportingmanager", ConditionOperator.Equal, managerRef.Id);
-                            query.Criteria.AddCondition("ink_designation", ConditionOperator.Equal, designationRef.Id);
 
-                            iTracingService.Trace("Executing RetrieveMultiple...");
+                        if (reportingManager != null)
+                            query.Criteria.AddCondition("ink_reportingmanager", ConditionOperator.Equal, reportingManager.Id);
 
-                            EntityCollection result =
-                                iOrganizationService.RetrieveMultiple(query);
+                        if (designation != null)
+                            query.Criteria.AddCondition("ink_designation", ConditionOperator.Equal, designation.Id);
 
-                            iTracingService.Trace($"Records Found: {result.Entities.Count}");
+                        EntityCollection existingRecords =
+                            iOrganizationService.RetrieveMultiple(query);
 
-                            if (result != null && result.Entities.Count > 0)
-                            {
-                                iTracingService.Trace("Duplicate record found. Throwing exception.");
-
-                                throw new InvalidPluginExecutionException(
-                                    "Duplicate Resource record found with same First Name, Last Name, Reporting Manager and Designation.");
-                            }
-                        }
-                        else
+                        if (existingRecords != null && existingRecords.Entities.Count > 0)
                         {
-                            iTracingService.Trace("Required fields are missing. Skipping duplicate check.");
+                            Plugin.ThrowManualException("Duplicate Resource record already exists.");
                         }
-                    }
-                    else
-                    {
-                        iTracingService.Trace("Resource Entity is NULL");
-                    }
-                }
-                else
-                {
-                    iTracingService.Trace("Target is NOT valid entity");
-                }
 
-                iTracingService.Trace("Plugin Execution Completed Successfully");
+                        // ===== Logic End =====
+                    }
+                }
             }
             catch (Exception ex)
             {
-                iTracingService.Trace("Exception Occurred: " + ex.ToString());
                 throw new InvalidPluginExecutionException(ex.Message);
             }
         }
