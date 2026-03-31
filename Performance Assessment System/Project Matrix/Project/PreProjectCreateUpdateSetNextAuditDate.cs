@@ -37,20 +37,21 @@ namespace Performance_Assessment_System.Project_Matrix
 
             // Obtain the organization service reference.
             IOrganizationService iOrganizationService = iOrganizationServiceFactory.CreateOrganizationService(iPluginExecutionContext.UserId);
-
+            
             try
             {
+               
                 if (Plugin.ValidateTargetAsEntity(CommonEntities.PROJECT, iPluginExecutionContext))
                 {
-
+                    
                     Entity projectEntity = (Entity)iPluginExecutionContext.InputParameters["Target"];
                     Entity projectPreImage = Plugin.GetPreEntityImage(iPluginExecutionContext, preImageAlias);
-
-                    if(projectEntity != null && projectPreImage != null)
+                    
+                    if (projectEntity != null)
                     {
                         OptionSetValue criticalityOptionSet = Plugin.GetAttributeValue<OptionSetValue>(projectEntity, projectPreImage, "ink_criticality");
                         OptionSetValue sizeOptionSet = Plugin.GetAttributeValue<OptionSetValue>(projectEntity, projectPreImage, "ink_size");
-
+                       
                         if(criticalityOptionSet != null && sizeOptionSet != null)
                         {
                             #region Get  Frequency Days from Audit Frequency Matrix
@@ -78,6 +79,7 @@ namespace Performance_Assessment_System.Project_Matrix
 
                                 // Extract the Frequency Days integer
                                 int frequencyDays = frequencyEntity.GetAttributeValue<int>("ink_auditfrequencydays");
+
                                 #region Calculate Next Audit Date
                                 DateTime nextAuditDate;
                                 DateTime baseDate = DateTime.UtcNow;
@@ -93,7 +95,7 @@ namespace Performance_Assessment_System.Project_Matrix
                                     auditQuery.ColumnSet = new ColumnSet("ink_auditeddate");
                                     auditQuery.AddOrder("ink_auditeddate", OrderType.Descending);
                                     auditQuery.TopCount = 1;
-                                    auditQuery.Criteria.AddCondition("_ink_projectid_value",
+                                    auditQuery.Criteria.AddCondition("ink_project",
                                         ConditionOperator.Equal, projectId);
 
                                     EntityCollection auditCollection =
@@ -125,12 +127,12 @@ namespace Performance_Assessment_System.Project_Matrix
                                     // Sunday → move to Monday
                                     nextAuditDate = nextAuditDate.AddDays(1);
                                 }
+
+
                                 #endregion
                                 // Update next audit date on project record using helper method
-                                Entity projectUpdateEntity = new Entity("ink_project");
-                                projectUpdateEntity.Id = projectEntity.Id;
-                                Plugin.AddAttribute(projectUpdateEntity, "ink_nextauditdate", nextAuditDate);
-                                iOrganizationService.Update(projectUpdateEntity);
+                                Plugin.AddAttribute<DateTime>(projectEntity, "ink_nextauditdate", nextAuditDate);
+                                
                             }
                             else
                             {
@@ -151,4 +153,4 @@ namespace Performance_Assessment_System.Project_Matrix
         #endregion
     }
 }
-}
+
