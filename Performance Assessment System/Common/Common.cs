@@ -19,7 +19,7 @@ namespace Performance_Assessment_System.Common
         public const string AUDIT = "ink_audit";
 
         public const string OBJECTIVE = "ink_objectives";
-
+        public const string KEYRESULT = "ink_keyresults";
 
         public struct Resource
         {

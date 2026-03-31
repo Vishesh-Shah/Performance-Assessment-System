@@ -67,8 +67,6 @@ namespace Performance_Assessment_System.Performance_Hub.Performance_Evaluation
                             Entity templateEntity = null;
                             if (fetchedTemplate.Entities.Count > 0)
                             {
-                                iTracingService.Trace(fetchedTemplate.Entities.Count.ToString());
-
                                 foreach (Entity template in fetchedTemplate.Entities)
                                 {
                                     templateEntity = template;
@@ -114,10 +112,26 @@ namespace Performance_Assessment_System.Performance_Hub.Performance_Evaluation
 
                                 if (fetchedObjectives.Entities.Count > 0)
                                 {
-                                    foreach (Entity entity in fetchedObjectives.Entities)
+                                    foreach (Entity objectiveEntity in fetchedObjectives.Entities)
                                     {
-                                        string name = Plugin.GetAttributeValue<string>(entity, "ink_name");
+                                        string name = Plugin.GetAttributeValue<string>(objectiveEntity, "ink_name");
                                         iTracingService.Trace(name);
+
+                                        QueryExpression keyResultQuery = new QueryExpression(CommonEntities.KEYRESULT);
+                                        keyResultQuery.ColumnSet.AddColumns("ink_name");
+                                        keyResultQuery.Criteria.AddCondition("ink_objectives", ConditionOperator.Equal, objectiveEntity.Id);
+
+                                        EntityCollection fetchedKeyResults = iOrganizationService.RetrieveMultiple(keyResultQuery);
+
+                                        if(fetchedKeyResults.Entities.Count > 0)
+                                        {
+                                            foreach (Entity KREntity in fetchedKeyResults.Entities)
+                                            {
+                                                string krname = Plugin.GetAttributeValue<string>(KREntity, "ink_name");
+                                                iTracingService.Trace(krname);
+                                            }
+                                        }
+
                                     }
                                 }
                             }
