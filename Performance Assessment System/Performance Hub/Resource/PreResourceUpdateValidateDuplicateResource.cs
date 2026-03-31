@@ -3,7 +3,7 @@ using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Query;
 using System;
 
-namespace JeetPlugins.Resource
+namespace Performance_Assessment_System.Resource
 {
     public class PreResourceUpdateValidateDuplicateResource : IPlugin
     {

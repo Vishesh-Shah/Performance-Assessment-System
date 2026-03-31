@@ -3,7 +3,7 @@ using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Query;
 using System;
 
-namespace JeetPlugins.Resource
+namespace Performance_Assessment_System.Resource
 {
     public class PreResourceCreateValidateDuplicateResource : IPlugin
     {
@@ -26,13 +26,18 @@ namespace JeetPlugins.Resource
 
             try
             {
+                iTracingService.Trace("Plugin Execution Started: PreResourceCreateValidateDuplicateResource");
+
                 if (Plugin.ValidateTargetAsEntity("ink_resource", iPluginExecutionContext))
                 {
+                    iTracingService.Trace("Target is valid entity");
+
                     Entity resourceEntity =
                         (Entity)iPluginExecutionContext.InputParameters["Target"];
 
                     if (resourceEntity != null)
                     {
+                        iTracingService.Trace("Resource Entity is not null");
 
                         string firstName =
                             Plugin.GetAttributeValue<string>(resourceEntity, "ink_firstname");
@@ -43,15 +48,21 @@ namespace JeetPlugins.Resource
                         EntityReference managerRef =
                             Plugin.GetAttributeValue<EntityReference>(resourceEntity, "ink_reportingmanager");
 
-                        
                         EntityReference designationRef =
                             Plugin.GetAttributeValue<EntityReference>(resourceEntity, "ink_designation");
+
+                        iTracingService.Trace($"FirstName: {firstName}");
+                        iTracingService.Trace($"LastName: {lastName}");
+                        iTracingService.Trace($"ManagerRef: {(managerRef != null ? managerRef.Id.ToString() : "NULL")}");
+                        iTracingService.Trace($"DesignationRef: {(designationRef != null ? designationRef.Id.ToString() : "NULL")}");
 
                         if (!string.IsNullOrWhiteSpace(firstName) &&
                             !string.IsNullOrWhiteSpace(lastName) &&
                             managerRef != null &&
-                            designationRef != null) 
+                            designationRef != null)
                         {
+                            iTracingService.Trace("All required fields are present. Building query...");
+
                             QueryExpression query = new QueryExpression("ink_resource");
                             query.ColumnSet = new ColumnSet(false);
 
@@ -60,21 +71,41 @@ namespace JeetPlugins.Resource
                             query.Criteria.AddCondition("ink_reportingmanager", ConditionOperator.Equal, managerRef.Id);
                             query.Criteria.AddCondition("ink_designation", ConditionOperator.Equal, designationRef.Id);
 
+                            iTracingService.Trace("Executing RetrieveMultiple...");
+
                             EntityCollection result =
                                 iOrganizationService.RetrieveMultiple(query);
 
+                            iTracingService.Trace($"Records Found: {result.Entities.Count}");
+
                             if (result != null && result.Entities.Count > 0)
                             {
-                                throw new InvalidPluginExecutionException("Duplicate Resource record found with same First Name, Last Name, Reporting Manager and Designation.");
+                                iTracingService.Trace("Duplicate record found. Throwing exception.");
+
+                                throw new InvalidPluginExecutionException(
+                                    "Duplicate Resource record found with same First Name, Last Name, Reporting Manager and Designation.");
                             }
                         }
-
-
+                        else
+                        {
+                            iTracingService.Trace("Required fields are missing. Skipping duplicate check.");
+                        }
+                    }
+                    else
+                    {
+                        iTracingService.Trace("Resource Entity is NULL");
                     }
                 }
+                else
+                {
+                    iTracingService.Trace("Target is NOT valid entity");
+                }
+
+                iTracingService.Trace("Plugin Execution Completed Successfully");
             }
             catch (Exception ex)
             {
+                iTracingService.Trace("Exception Occurred: " + ex.ToString());
                 throw new InvalidPluginExecutionException(ex.Message);
             }
         }
