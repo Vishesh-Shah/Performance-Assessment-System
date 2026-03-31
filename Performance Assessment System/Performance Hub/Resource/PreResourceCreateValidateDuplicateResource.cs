@@ -26,7 +26,7 @@ namespace Performance_Assessment_System.Resource
                 if (Plugin.ValidateTargetAsEntity("ink_resource", context))
                 {
                     Entity entity = (Entity)context.InputParameters["Target"];
-
+                    throw new InvalidPluginExecutionException("Plugin Hit");
                     if (entity != null)
                     {
                         string firstName = Plugin.GetAttributeValue<string>(entity, "ink_firstname");
