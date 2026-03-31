@@ -13,7 +13,6 @@ namespace Performance_Assessment_System.Common
         public const string RESOURCE = "ink_resource";
         public const string PERFORMANCEEVALUATIONTEMPLATE = "ink_performanceevaluationtemplate";
         public const string PERFORMANCEEVALUATION = "ink_performanceevaluations";
-        public const string OBJECTIVE = "ink_objectives";
 
 
 
