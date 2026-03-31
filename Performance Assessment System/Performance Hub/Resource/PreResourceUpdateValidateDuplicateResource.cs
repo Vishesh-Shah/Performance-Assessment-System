@@ -51,20 +51,16 @@ namespace Performance_Assessment_System.Resource
 
                         if (manager != null)
                             query.Criteria.AddCondition("ink_reportingmanager", ConditionOperator.Equal, manager.Id);
-                        else
-                            return;
 
                         if (designation != null)
                             query.Criteria.AddCondition("ink_designation", ConditionOperator.Equal, designation.Id);
-                        else
-                            return;
 
                         // ✅ Exclude current record
                         query.Criteria.AddCondition("ink_resourceid", ConditionOperator.NotEqual, entity.Id);
 
                         EntityCollection result = service.RetrieveMultiple(query);
 
-                        if (result.Entities.Count > 0)
+                        if (result != null && result.Entities.Count > 0)
                         {
                             Plugin.ThrowManualException("Duplicate Resource record already exists.");
                         }

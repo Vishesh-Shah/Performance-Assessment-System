@@ -26,7 +26,7 @@ namespace Performance_Assessment_System.Resource
                 if (Plugin.ValidateTargetAsEntity("ink_resource", context))
                 {
                     Entity entity = (Entity)context.InputParameters["Target"];
-                    throw new InvalidPluginExecutionException("Plugin Hit");
+
                     if (entity != null)
                     {
                         string firstName = Plugin.GetAttributeValue<string>(entity, "ink_firstname");
@@ -44,17 +44,13 @@ namespace Performance_Assessment_System.Resource
 
                         if (manager != null)
                             query.Criteria.AddCondition("ink_reportingmanager", ConditionOperator.Equal, manager.Id);
-                        else
-                            return; // skip if incomplete
 
                         if (designation != null)
                             query.Criteria.AddCondition("ink_designation", ConditionOperator.Equal, designation.Id);
-                        else
-                            return;
 
                         EntityCollection result = service.RetrieveMultiple(query);
 
-                        if (result.Entities.Count > 0)
+                        if (result != null && result.Entities.Count > 0)
                         {
                             Plugin.ThrowManualException("Duplicate Resource record already exists.");
                         }
