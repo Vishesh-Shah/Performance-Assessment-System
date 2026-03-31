@@ -17,6 +17,10 @@ namespace Performance_Assessment_System.Common
         public const string AUDITMATRIX = "ink_auditmatrix";
         public const string AUDITFREQUENCYMATRIX = "ink_auditfrequencymatrix";
         public const string AUDIT = "ink_audit";
+
+        public const string OBJECTIVE = "ink_objectives";
+
+
         public struct Resource
         {
             public const string INK_RESOURCEID = "ink_resourceid";
