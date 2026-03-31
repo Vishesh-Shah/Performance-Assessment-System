@@ -3,14 +3,21 @@ using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Query;
 using Performance_Assessment_System.Common;
 using System;
-using System.Data.SqlTypes;
+using System.Collections.Generic;
 
 namespace Performance_Assessment_System.Performance_Hub.Resource
 {
+    /// <summary>
+    /// Pre-Operation Action Plugin on Create Performance Evaluations Action triggered from Resource form ribbon button.
+    /// Loops all active resources, checks for duplicate Performance Evaluations (same Assessee + Assessor + Cycle),
+    /// and creates Performance Evaluation records only where no duplicate exists.
+    /// Duplicate check uses both in-memory HashSet (same-transaction guard) and DB query (previous-run guard).
+    /// Filter Attribute: N/A (Action trigger)
+    /// Pre-Image Alias: N/A (Action trigger)
+    /// </summary>
     public class PreResourceOnActionCreatePerformanceEvaluations : IPlugin
     {
         #region Variable Declaration
-
 
         #endregion
 
@@ -18,7 +25,9 @@ namespace Performance_Assessment_System.Performance_Hub.Resource
 
         #region Execute
         /// <summary>
-        /// Plugin Description: Populate totalAmount on Department on creation of MonthlyPayment based on Employee
+        /// Retrieves all active resources, finds matching evaluation template by designation,
+        /// performs in-memory + database duplicate check on Assessee + Assessor + Cycle,
+        /// and creates Performance Evaluation if no duplicate found.
         /// </summary>
         public void Execute(IServiceProvider iServiceProvider)
         {
@@ -36,53 +45,142 @@ namespace Performance_Assessment_System.Performance_Hub.Resource
 
             try
             {
-                QueryExpression resourceQuery = new QueryExpression(CommonEntities.RESOURCE);
-                resourceQuery.ColumnSet = new ColumnSet("ink_firstname", "ink_lastname", "ink_reportingmanager", "ink_designation");
-                EntityCollection fetchedResourceEntityCollection = iOrganizationService.RetrieveMultiple(resourceQuery);
+                // ── Step 1: Fetch all active resources ───────────────────────────
+                QueryExpression resourceQueryExpression = new QueryExpression(CommonEntities.RESOURCE);
+                resourceQueryExpression.ColumnSet = new ColumnSet(
+                    CommonEntities.Resource.INK_FIRSTNAME,
+                    CommonEntities.Resource.INK_LASTNAME,
+                    CommonEntities.Resource.INK_REPORTINGMANAGER,
+                    CommonEntities.Resource.INK_DESIGNATION
+                );
+                resourceQueryExpression.Criteria.AddCondition("statecode", ConditionOperator.Equal, 0);
 
-                if (fetchedResourceEntityCollection.Entities.Count > 0)
+                EntityCollection lstResourceRecords = iOrganizationService.RetrieveMultiple(resourceQueryExpression);
+
+                if (lstResourceRecords.Entities.Count > 0)
                 {
-                    foreach (Entity resourceEntity in fetchedResourceEntityCollection.Entities)
+                    // ── In-memory tracker: guards against duplicates created
+                    // within the SAME plugin execution (DB query won't see them
+                    // until the transaction commits, so we track them here too).
+                    // Key format: assesseeId_assessorId_cycleId
+                    HashSet<string> processedCombinations = new HashSet<string>();
+
+                    foreach (Entity resourceEntity in lstResourceRecords.Entities)
                     {
-                        EntityReference assesseeEntityReference = new EntityReference(resourceEntity.LogicalName, resourceEntity.Id);
-                        EntityReference reportingManagerEntityReference = Plugin.GetAttributeValue<EntityReference>(resourceEntity, "ink_reportingmanager");
-                        string firstName = Plugin.GetAttributeValue<string>(resourceEntity, "ink_firstname");
-                        string lastName = Plugin.GetAttributeValue<string>(resourceEntity, "ink_lastname");
+                        // ── Step 2: Skip resource if no Reporting Manager ─────────
+                        EntityReference reportingManagerEntityReference = Plugin.GetAttributeValue<EntityReference>(resourceEntity, CommonEntities.Resource.INK_REPORTINGMANAGER);
 
-                        if (reportingManagerEntityReference != null)
+                        if (reportingManagerEntityReference == null)
                         {
-
-                            OptionSetValue designation = Plugin.GetAttributeValue<OptionSetValue>(resourceEntity, "ink_designation");
-
-                            QueryExpression templateQuery = new QueryExpression(CommonEntities.PERFORMANCEEVALUATIONTEMPLATE);
-                            templateQuery.ColumnSet = new ColumnSet("ink_performancereviewcycle");
-                            templateQuery.Criteria.AddCondition("ink_designation", ConditionOperator.Equal, designation.Value);
-
-                            EntityCollection fetchedTemplateEntityCollection = iOrganizationService.RetrieveMultiple(templateQuery);
-
-                            if (fetchedTemplateEntityCollection.Entities.Count > 0)
-                            {
-                                Entity templateEntity = fetchedTemplateEntityCollection.Entities[0];
-                                EntityReference performanceReviewCycle = Plugin.GetAttributeValue<EntityReference>(
-                                    templateEntity, "ink_performancereviewcycle"
-                                );
-
-                                string cycleName = performanceReviewCycle != null ? performanceReviewCycle.Name : "";
-                                string PEName = firstName + " " + lastName + " " + cycleName;
-
-                                Entity performanceEvaluationEntity = new Entity(CommonEntities.PERFORMANCEEVALUATION);
-                                Plugin.AddAttribute<string>(performanceEvaluationEntity, "ink_name", PEName);
-                                Plugin.AddAttribute<EntityReference>(performanceEvaluationEntity, "ink_assessee", assesseeEntityReference);
-                                Plugin.AddAttribute<EntityReference>(performanceEvaluationEntity, "ink_assessor", reportingManagerEntityReference);
-                                Plugin.AddAttribute<EntityReference>(performanceEvaluationEntity, "ink_performancereviewcycle", performanceReviewCycle);
-
-                                iOrganizationService.Create(performanceEvaluationEntity);
-                                iTracingService.Trace("Completed......" + PEName);
-
-                            }
+                            Plugin.TraceLog("Skipping resource " + resourceEntity.Id + " — no Reporting Manager.", iTracingService);
+                            continue;
                         }
-                    }
 
+                        // ── Step 3: Get Designation from resource ─────────────────
+                        OptionSetValue designationOptionSetValue = Plugin.GetAttributeValue<OptionSetValue>(resourceEntity, CommonEntities.Resource.INK_DESIGNATION);
+
+                        if (designationOptionSetValue == null)
+                        {
+                            Plugin.TraceLog("Skipping resource " + resourceEntity.Id + " — no Designation.", iTracingService);
+                            continue;
+                        }
+
+                        // ── Step 4: Find the LATEST active template for this Designation
+                        // TopCount = 1 + order by createdon desc ensures only ONE
+                        // template is returned even if multiple exist for the same
+                        // designation — preventing 3x duplicates per person.
+                        QueryExpression templateQueryExpression = new QueryExpression(CommonEntities.PERFORMANCEEVALUATIONTEMPLATE);
+                        templateQueryExpression.ColumnSet = new ColumnSet(
+                            CommonEntities.PerformanceEvaluationTemplate.INK_PERFORMANCEREVIEWCYCLE
+                        );
+                        templateQueryExpression.Criteria.AddCondition(CommonEntities.PerformanceEvaluationTemplate.INK_DESIGNATION, ConditionOperator.Equal, designationOptionSetValue.Value);
+                        templateQueryExpression.Criteria.AddCondition("statecode", ConditionOperator.Equal, 0);
+                        templateQueryExpression.TopCount = 1;
+                        templateQueryExpression.AddOrder("createdon", OrderType.Descending);
+
+                        EntityCollection lstTemplateRecords = iOrganizationService.RetrieveMultiple(templateQueryExpression);
+
+                        if (lstTemplateRecords.Entities.Count == 0)
+                        {
+                            Plugin.TraceLog("Skipping resource " + resourceEntity.Id + " — no matching template for designation " + designationOptionSetValue.Value + ".", iTracingService);
+                            continue;
+                        }
+
+                        // ── Step 5: Get Cycle from the matched template ────────────
+                        Entity templateEntity = lstTemplateRecords.Entities[0];
+
+                        EntityReference performanceReviewCycleEntityReference = Plugin.GetAttributeValue<EntityReference>(templateEntity, CommonEntities.PerformanceEvaluationTemplate.INK_PERFORMANCEREVIEWCYCLE);
+
+                        if (performanceReviewCycleEntityReference == null)
+                        {
+                            Plugin.TraceLog("Skipping resource " + resourceEntity.Id + " — template has no Performance Review Cycle.", iTracingService);
+                            continue;
+                        }
+
+                        // ── Step 6: In-memory duplicate check ─────────────────────
+                        // Catches combinations already processed in this same execution
+                        // (these won't be visible in DB yet so the DB query below would miss them).
+                        string combinationKey = resourceEntity.Id.ToString()
+                            + "_" + reportingManagerEntityReference.Id.ToString()
+                            + "_" + performanceReviewCycleEntityReference.Id.ToString();
+
+                        if (processedCombinations.Contains(combinationKey))
+                        {
+                            Plugin.TraceLog("Skipping resource " + resourceEntity.Id + " — combination already processed in this run.", iTracingService);
+                            continue;
+                        }
+
+                        // ── Step 7: Database duplicate check ──────────────────────
+                        // Catches combinations that already exist from a previous run.
+                        QueryExpression duplicateCheckQueryExpression = new QueryExpression(CommonEntities.PERFORMANCEEVALUATION);
+                        duplicateCheckQueryExpression.ColumnSet = new ColumnSet(CommonEntities.PerformanceEvaluation.INK_NAME);
+                        duplicateCheckQueryExpression.Criteria.AddCondition(
+                            CommonEntities.PerformanceEvaluation.INK_ASSESSEE,
+                            ConditionOperator.Equal,
+                            resourceEntity.Id);
+                        duplicateCheckQueryExpression.Criteria.AddCondition(
+                            CommonEntities.PerformanceEvaluation.INK_ASSESSOR,
+                            ConditionOperator.Equal,
+                            reportingManagerEntityReference.Id);
+                        duplicateCheckQueryExpression.Criteria.AddCondition(
+                            CommonEntities.PerformanceEvaluation.INK_PERFORMANCEREVIEWCYCLE,
+                            ConditionOperator.Equal,
+                            performanceReviewCycleEntityReference.Id);
+                        duplicateCheckQueryExpression.Criteria.AddCondition("statecode", ConditionOperator.Equal, 0);
+                        duplicateCheckQueryExpression.TopCount = 1;
+
+                        EntityCollection lstDuplicateRecords = iOrganizationService.RetrieveMultiple(duplicateCheckQueryExpression);
+
+                        if (lstDuplicateRecords != null && lstDuplicateRecords.Entities.Count > 0)
+                        {
+                            Plugin.TraceLog("Skipping resource " + resourceEntity.Id + " — Performance Evaluation already exists in DB.", iTracingService);
+                            continue;
+                        }
+
+                        // ── Step 8: Register combination in-memory BEFORE creating ─
+                        // Must happen before iOrganizationService.Create so that if the
+                        // same combination appears again later in this loop it is caught.
+                        processedCombinations.Add(combinationKey);
+
+                        // ── Step 9: Build PE name ─────────────────────────────────
+                        string firstName = Plugin.GetAttributeValue<string>(resourceEntity, CommonEntities.Resource.INK_FIRSTNAME);
+                        string lastName = Plugin.GetAttributeValue<string>(resourceEntity, CommonEntities.Resource.INK_LASTNAME);
+                        string cycleName = performanceReviewCycleEntityReference.Name ?? string.Empty;
+                        string performanceEvaluationName = firstName + " " + lastName + " " + cycleName;
+
+                        // ── Step 10: Create Performance Evaluation record ──────────
+                        EntityReference assesseeEntityReference = new EntityReference(resourceEntity.LogicalName, resourceEntity.Id);
+
+                        Entity performanceEvaluationEntity = new Entity(CommonEntities.PERFORMANCEEVALUATION);
+                        Plugin.AddAttribute<string>(performanceEvaluationEntity, CommonEntities.PerformanceEvaluation.INK_NAME, performanceEvaluationName);
+                        Plugin.AddAttribute<EntityReference>(performanceEvaluationEntity, CommonEntities.PerformanceEvaluation.INK_ASSESSEE, assesseeEntityReference);
+                        Plugin.AddAttribute<EntityReference>(performanceEvaluationEntity, CommonEntities.PerformanceEvaluation.INK_ASSESSOR, reportingManagerEntityReference);
+                        Plugin.AddAttribute<EntityReference>(performanceEvaluationEntity, CommonEntities.PerformanceEvaluation.INK_PERFORMANCEREVIEWCYCLE, performanceReviewCycleEntityReference);
+
+                        iOrganizationService.Create(performanceEvaluationEntity);
+
+                        Plugin.TraceLog("Performance Evaluation created: " + performanceEvaluationName, iTracingService);
+                    }
                 }
             }
             catch (Exception ex)
@@ -93,6 +191,5 @@ namespace Performance_Assessment_System.Performance_Hub.Resource
         #endregion
 
         #endregion
-
     }
 }
