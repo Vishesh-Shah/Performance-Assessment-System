@@ -56,23 +56,26 @@ namespace Performance_Assessment_System.Resource
                         EntityReference designation =
                             Plugin.GetAttributeValue<EntityReference>(resourceEntity, preImage, "ink_designation");
 
+                        // ⚠️ Optional safety
+                        if (string.IsNullOrWhiteSpace(firstName) ||
+                            string.IsNullOrWhiteSpace(lastName) ||
+                            reportingManager == null ||
+                            designation == null)
+                        {
+                            return;
+                        }
+
                         QueryExpression query = new QueryExpression("ink_resource");
                         query.ColumnSet = new ColumnSet(false);
                         query.TopCount = 1;
 
-                        if (!string.IsNullOrWhiteSpace(firstName))
-                            query.Criteria.AddCondition("ink_firstname", ConditionOperator.Equal, firstName);
+                        // 🔥 STRICT MATCH (ALL 4 CONDITIONS)
+                        query.Criteria.AddCondition("ink_firstname", ConditionOperator.Equal, firstName);
+                        query.Criteria.AddCondition("ink_lastname", ConditionOperator.Equal, lastName);
+                        query.Criteria.AddCondition("ink_reportingmanager", ConditionOperator.Equal, reportingManager.Id);
+                        query.Criteria.AddCondition("ink_designation", ConditionOperator.Equal, designation.Id);
 
-                        if (!string.IsNullOrWhiteSpace(lastName))
-                            query.Criteria.AddCondition("ink_lastname", ConditionOperator.Equal, lastName);
-
-                        if (reportingManager != null)
-                            query.Criteria.AddCondition("ink_reportingmanager", ConditionOperator.Equal, reportingManager.Id);
-
-                        if (designation != null)
-                            query.Criteria.AddCondition("ink_designation", ConditionOperator.Equal, designation.Id);
-
-                        // Exclude current record
+                        // ✅ Exclude current record
                         query.Criteria.AddCondition("ink_resourceid", ConditionOperator.NotEqual, resourceEntity.Id);
 
                         EntityCollection existingRecords =
