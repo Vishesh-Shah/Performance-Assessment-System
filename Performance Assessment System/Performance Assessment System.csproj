@@ -130,6 +130,7 @@
     <Compile Include="Client Matrix\Project\PostProjectCreatSetNextRetroDate.cs" />
     <Compile Include="Common\Common.cs" />
     <Compile Include="Common\Plugin.cs" />
+    <Compile Include="Performance Hub\Performance Evaluation\PostPerformanceEvaluationCreateCreateRatingRecords.cs" />
     <Compile Include="Performance Hub\Resource\PreResourceCreateValidateDuplicateResource.cs" />
     <Compile Include="Performance Hub\Resource\PreResourceOnActionCreatePerformanceEvaluations.cs" />
     <Compile Include="Performance Hub\Resource\PreResourceUpdateValidateDuplicateResource.cs" />
