@@ -82,40 +82,21 @@ namespace Performance_Assessment_System.Project_Matrix
 
                                 #region Calculate Next Audit Date
                                 DateTime nextAuditDate;
-                                DateTime baseDate = DateTime.UtcNow;
 
-                                // Check if there is an existing audit for this project
-                                // If yes use last audit date as base
-                                // If no use today as base
-                                Guid projectId = iPluginExecutionContext.PrimaryEntityId;
-
-                                if (projectId != Guid.Empty)
+                                DateTime lastAuditDate = Plugin.GetAttributeValue<DateTime>(projectEntity, projectPreImage, "ink_lastauditdate");
+                                if(lastAuditDate == null)
                                 {
-                                    QueryExpression auditQuery = new QueryExpression(CommonEntities.AUDIT);
-                                    auditQuery.ColumnSet = new ColumnSet("ink_auditeddate");
-                                    auditQuery.AddOrder("ink_auditeddate", OrderType.Descending);
-                                    auditQuery.TopCount = 1;
-                                    auditQuery.Criteria.AddCondition("ink_project",
-                                        ConditionOperator.Equal, projectId);
-
-                                    EntityCollection auditCollection =
-                                        iOrganizationService.RetrieveMultiple(auditQuery);
-
-                                    if (auditCollection != null && auditCollection.Entities.Count > 0)
-                                    {
-                                        DateTime? lastAuditDate = Plugin.GetAttributeValue<DateTime?>(
-                                            auditCollection.Entities[0], "ink_auditeddate");
-
-                                        if (lastAuditDate.HasValue && lastAuditDate.Value != DateTime.MinValue)
-                                        {
-                                            baseDate = lastAuditDate.Value;
-                                        }
-                                    }
+                                    nextAuditDate= DateTime.UtcNow;
                                 }
+                                else
+                                {
+                                    nextAuditDate = lastAuditDate;
+                                }
+                             
 
                                 // Calculate the next audit gate date by adding the frequency days to the base date
 
-                                nextAuditDate = baseDate.AddDays(frequencyDays);
+                                nextAuditDate = nextAuditDate.AddDays(frequencyDays);
 
                                 if (nextAuditDate.DayOfWeek == DayOfWeek.Saturday)
                                 {

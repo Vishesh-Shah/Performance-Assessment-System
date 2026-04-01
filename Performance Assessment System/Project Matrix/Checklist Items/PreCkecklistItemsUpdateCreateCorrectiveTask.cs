@@ -34,7 +34,7 @@ namespace Performance_Assessment_System.Project_Matrix.Checklist_Items
             // Obtain the organization service reference.
             IOrganizationService iOrganizationService = iOrganizationServiceFactory.CreateOrganizationService(iPluginExecutionContext.UserId);
 
-            iTracingService.Trace("PostCkecklistItemsUpdateCreateCorrectiveTask plugin execution started.");
+           
             try
             {
                 if (Plugin.ValidateTargetAsEntity(CommonEntities.CHECKLISTITEM, iPluginExecutionContext))
@@ -43,13 +43,13 @@ namespace Performance_Assessment_System.Project_Matrix.Checklist_Items
                     Entity checklistItemEntity = (Entity)iPluginExecutionContext.InputParameters["Target"];
                     Entity checklistItemPreImage = Plugin.GetPreEntityImage(iPluginExecutionContext, preImageAlias);
 
-                    iTracingService.Trace("Checklist Item Entity and PreImage retrieved successfully.");
+                  
 
                     if (checklistItemEntity != null && checklistItemPreImage != null)
                     {
                         int rating = Plugin.GetAttributeValue<int>(checklistItemEntity, checklistItemPreImage, "ink_rating");
 
-                        iTracingService.Trace($"Rating retrieved successfully. Current Rating: {rating}");
+                     
 
                             #region Get  Existing Corrective Task from Task Entity if it exists for the Checklist Item  
                             // 1. Query the Task table to see if a task already exists for this Checklist Item

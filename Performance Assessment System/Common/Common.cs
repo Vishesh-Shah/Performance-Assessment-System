@@ -18,6 +18,8 @@ namespace Performance_Assessment_System.Common
         public const string AUDITFREQUENCYMATRIX = "ink_auditfrequencymatrix";
         public const string AUDIT = "ink_audit";
         public const string CHECKLISTITEM = "ink_checklistitem";
+        public const string TASK = "task";
+
 
         public const string OBJECTIVE = "ink_objectives";
         public const string KEYRESULT = "ink_keyresults";
@@ -51,5 +53,15 @@ namespace Performance_Assessment_System.Common
             public const string INK_ASSESSOR = "ink_assessor";
             public const string INK_PERFORMANCEREVIEWCYCLE = "ink_performancereviewcycle";
         }
+    }
+    public struct Status 
+    {
+       
+        
+            public const int NEW = 826460000;
+            public const int STARTED = 826460001;
+            public const int SUBMITTED = 826460002;
+            public const int CLOSED = 826460003;
+
     }
 }
