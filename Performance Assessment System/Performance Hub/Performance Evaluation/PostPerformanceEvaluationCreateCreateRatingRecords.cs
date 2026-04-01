@@ -3,16 +3,12 @@ using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Query;
 using Performance_Assessment_System.Common;
 using System;
-using System.Collections.Generic;
-using System.Web.Services.Description;
-using System.Windows.Documents;
-using System.Xml.Linq;
 
 namespace Performance_Assessment_System.Performance_Hub.Performance_Evaluation
 {
     /// <summary>
-    /// PreValidation-Operation Plugin on Create of Resource.
-    /// Prevents duplicate Resource records based on First Name + Last Name + Reporting Manager + Designation.
+    /// Post-Operation Plugin on Create of Performance Evaluation
+    /// Creating all the key result ratings record for the performance evaluatio record created.
     /// Filter Attribute: N/A
     /// Pre-Image Alias: N/A
     /// </summary>
@@ -21,10 +17,7 @@ namespace Performance_Assessment_System.Performance_Hub.Performance_Evaluation
         #region Public Methods
 
         #region Execute
-        /// <summary>
-        /// Validates whether another active Resource already exists with the same
-        /// First Name, Last Name, Reporting Manager, and Designation combination.
-        /// </summary>
+
         public void Execute(IServiceProvider iServiceProvider)
         {
             // Obtain the execution context from the service provider.
@@ -51,15 +44,16 @@ namespace Performance_Assessment_System.Performance_Hub.Performance_Evaluation
 
                     if (performanceEvaluationEntity != null)
                     {
+                        //getting the designation using assessee record
                         EntityReference assesseeReference = Plugin.GetAttributeValue<EntityReference>(performanceEvaluationEntity, "ink_assessee");
                         Entity assesseeEntity = Plugin.FetchEntityRecord(CommonEntities.RESOURCE, assesseeReference.Id, new ColumnSet("ink_designation"), iOrganizationService);
                         OptionSetValue designation = Plugin.GetAttributeValue<OptionSetValue>(assesseeEntity, "ink_designation");
-
+                        //getting the review cycle
                         EntityReference reviewCycleReference = Plugin.GetAttributeValue<EntityReference>(performanceEvaluationEntity, "ink_performancereviewcycle");
 
                         if (reviewCycleReference != null && assesseeEntity != null && designation != null)
                         {
-
+                            //using designation and review cycle to fetch the performance evaluation template
                             QueryExpression query = new QueryExpression(CommonEntities.PERFORMANCEEVALUATIONTEMPLATE);
                             query.ColumnSet.AddColumns("ink_name");
                             query.Criteria.AddCondition("ink_designation", ConditionOperator.Equal, designation.Value);
@@ -108,9 +102,12 @@ namespace Performance_Assessment_System.Performance_Hub.Performance_Evaluation
                                 linkIntersect.LinkEntities.Add(linkTemplate);
                                 templateQuery.LinkEntities.Add(linkIntersect);
 
+                                // getting the objectives related to the template
                                 EntityCollection fetchedObjectives = iOrganizationService.RetrieveMultiple(templateQuery);
 
                                 #endregion
+
+                                #region Creating Key Result Rating Records
 
                                 bool flag = true;
                                 int objectiveIndex = 0;
@@ -119,12 +116,15 @@ namespace Performance_Assessment_System.Performance_Hub.Performance_Evaluation
                                 {
                                     foreach (Entity objectiveEntity in fetchedObjectives.Entities)
                                     {
+                                        // flag for only creating an extra objeective row
                                         flag = true;
+
                                         keyResultIndex = 0;
                                         objectiveIndex += 1;
 
                                         string objName = Plugin.GetAttributeValue<string>(objectiveEntity, "ink_name");
 
+                                        //fetching all key results of the current objective
                                         QueryExpression keyResultQuery = new QueryExpression(CommonEntities.KEYRESULT);
                                         keyResultQuery.ColumnSet.AddColumns("ink_name");
                                         keyResultQuery.Criteria.AddCondition("ink_objectives", ConditionOperator.Equal, objectiveEntity.Id);
@@ -132,6 +132,8 @@ namespace Performance_Assessment_System.Performance_Hub.Performance_Evaluation
                                         EntityCollection fetchedKeyResults = iOrganizationService.RetrieveMultiple(keyResultQuery);
 
                                         keyResultIndex += objectiveIndex;
+
+                                        // peformance evaluation name 
                                         string PEName = Plugin.GetAttributeValue<string>(performanceEvaluationEntity, "ink_name");
 
                                         if (fetchedKeyResults.Entities.Count > 0)
@@ -140,6 +142,8 @@ namespace Performance_Assessment_System.Performance_Hub.Performance_Evaluation
                                             {
                                                 if (flag == true)
                                                 {
+                                                    #region Create Objective Display Record
+
                                                     string name = PEName + " " + objName;
                                                     string SrNo = objectiveIndex + " - Objective";
                                                     EntityReference performanceEvaluation = new EntityReference(CommonEntities.PERFORMANCEEVALUATION, performanceEvaluationEntity.Id);
@@ -154,12 +158,17 @@ namespace Performance_Assessment_System.Performance_Hub.Performance_Evaluation
                                                     Plugin.AddAttribute<int>(keyResultRatingEntity, "ink_objectivenumbering", objectiveIndex);
                                                     Plugin.AddAttribute<string>(keyResultRatingEntity, "ink_griddisplayname", objName);
                                                     Plugin.AddAttribute<string>(keyResultRatingEntity, "ink_srno", SrNo);
+                                                    Plugin.AddAttribute<DateTime>(keyResultRatingEntity, "ink_date", DateTime.UtcNow);
                                                     iOrganizationService.Create(keyResultRatingEntity);
+                                                    
+                                                    #endregion
 
                                                     flag = false;
                                                 }
                                                 else
                                                 {
+                                                    #region Create Key Result Rating Record
+
                                                     Entity keyResultEntity = fetchedKeyResults.Entities[i - 1];
                                                     string KRname = Plugin.GetAttributeValue<string>(keyResultEntity, "ink_name");
                                                     string name = PEName + " " + KRname;
@@ -178,14 +187,18 @@ namespace Performance_Assessment_System.Performance_Hub.Performance_Evaluation
                                                     Plugin.AddAttribute<decimal>(keyResultRatingEntity, "ink_keyresultnumbering", keyResultIndex);
                                                     Plugin.AddAttribute<string>(keyResultRatingEntity, "ink_griddisplayname", KRname);
                                                     Plugin.AddAttribute<string>(keyResultRatingEntity, "ink_srno", SrNo);
+                                                    Plugin.AddAttribute<DateTime>(keyResultRatingEntity, "ink_date", DateTime.UtcNow);
                                                     iOrganizationService.Create(keyResultRatingEntity);
 
+                                                    #endregion
                                                 }
                                             }
                                         }
 
                                     }
                                 }
+
+                                #endregion
                             }
                         }
                     }

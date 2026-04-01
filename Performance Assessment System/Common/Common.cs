@@ -24,6 +24,9 @@ namespace Performance_Assessment_System.Common
 
         public const string KEYRESULTRATING = "ink_keyresultratings";
 
+        public const string COREEXPECTATION = "ink_coreexpectations";
+        public const string COREEXPECTATIONRATING = "ink_coreexpectationratings";
+
         public struct Resource
         {
             public const string INK_RESOURCEID = "ink_resourceid";
