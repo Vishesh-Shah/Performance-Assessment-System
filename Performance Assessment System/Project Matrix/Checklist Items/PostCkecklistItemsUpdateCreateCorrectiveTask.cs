@@ -34,7 +34,7 @@ namespace Performance_Assessment_System.Project_Matrix.Checklist_Items
             // Obtain the organization service reference.
             IOrganizationService iOrganizationService = iOrganizationServiceFactory.CreateOrganizationService(iPluginExecutionContext.UserId);
 
-            iTracingService.Trace("PostCkecklistItemsUpdateCreateCorrectiveTask plugin execution started.");        
+            iTracingService.Trace("PostCkecklistItemsUpdateCreateCorrectiveTask plugin execution started.");
             try
             {
                 if (Plugin.ValidateTargetAsEntity(CommonEntities.CHECKLISTITEM, iPluginExecutionContext))
@@ -47,7 +47,7 @@ namespace Performance_Assessment_System.Project_Matrix.Checklist_Items
 
                     if (checklistItemEntity != null && checklistItemPreImage != null)
                     {
-                        int rating = Plugin.GetAttributeValue<int>(checklistItemEntity, checklistItemPreImage,"ink_rating");
+                        int rating = Plugin.GetAttributeValue<int>(checklistItemEntity, checklistItemPreImage, "ink_rating");
 
                         iTracingService.Trace($"Rating retrieved successfully. Current Rating: {rating}");
 
@@ -81,7 +81,7 @@ namespace Performance_Assessment_System.Project_Matrix.Checklist_Items
                                 correctiveTaskEntity["regardingobjectid"] = new EntityReference("ink_auditchecklistitem", checklistItemEntity.Id);
 
                                 // Create the task
-                                iOrganizationService.Create(correctiveTask);
+                                iOrganizationService.Create(correctiveTaskEntity);
                             }
                             #endregion
 
@@ -106,6 +106,11 @@ namespace Performance_Assessment_System.Project_Matrix.Checklist_Items
                                 }
                             }
                             #endregion
+                        }
+                    }
+                }
+            }
+
             catch (Exception ex)
             {
                 throw new InvalidPluginExecutionException(ex.Message);
