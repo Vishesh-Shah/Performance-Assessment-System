@@ -14,7 +14,7 @@ namespace Performance_Assessment_System.Project_Matrix.Audit
     public class PreAuditUpdateCheckAtSubmission : IPlugin
     {
         #region Variable Declaration
-        private const string preImageAlias = "PreChecklistItemUpdateCreateCorrectiveTaskPreImage";
+       
         #endregion
         #region Execute
         /// <summary>
