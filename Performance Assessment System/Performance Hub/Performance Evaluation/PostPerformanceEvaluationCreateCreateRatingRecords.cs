@@ -5,6 +5,8 @@ using Performance_Assessment_System.Common;
 using System;
 using System.Collections.Generic;
 using System.Web.Services.Description;
+using System.Windows.Documents;
+using System.Xml.Linq;
 
 namespace Performance_Assessment_System.Performance_Hub.Performance_Evaluation
 {
@@ -110,12 +112,18 @@ namespace Performance_Assessment_System.Performance_Hub.Performance_Evaluation
 
                                 #endregion
 
+                                bool flag = true;
+                                int objectiveIndex = 0;
+                                decimal keyResultIndex = 0m;
                                 if (fetchedObjectives.Entities.Count > 0)
                                 {
                                     foreach (Entity objectiveEntity in fetchedObjectives.Entities)
                                     {
-                                        string name = Plugin.GetAttributeValue<string>(objectiveEntity, "ink_name");
-                                        iTracingService.Trace(name);
+                                        flag = true;
+                                        keyResultIndex = 0;
+                                        objectiveIndex += 1;
+
+                                        string objName = Plugin.GetAttributeValue<string>(objectiveEntity, "ink_name");
 
                                         QueryExpression keyResultQuery = new QueryExpression(CommonEntities.KEYRESULT);
                                         keyResultQuery.ColumnSet.AddColumns("ink_name");
@@ -123,12 +131,56 @@ namespace Performance_Assessment_System.Performance_Hub.Performance_Evaluation
 
                                         EntityCollection fetchedKeyResults = iOrganizationService.RetrieveMultiple(keyResultQuery);
 
-                                        if(fetchedKeyResults.Entities.Count > 0)
+                                        keyResultIndex += objectiveIndex;
+                                        string PEName = Plugin.GetAttributeValue<string>(performanceEvaluationEntity, "ink_name");
+
+                                        if (fetchedKeyResults.Entities.Count > 0)
                                         {
-                                            foreach (Entity KREntity in fetchedKeyResults.Entities)
+                                            for (int i = 0; i < (fetchedKeyResults.Entities.Count + 1); i++)
                                             {
-                                                string krname = Plugin.GetAttributeValue<string>(KREntity, "ink_name");
-                                                iTracingService.Trace(krname);
+                                                if (flag == true)
+                                                {
+                                                    string name = PEName + " " + objName;
+                                                    string SrNo = objectiveIndex + " - Objective";
+                                                    EntityReference performanceEvaluation = new EntityReference(CommonEntities.PERFORMANCEEVALUATION, performanceEvaluationEntity.Id);
+                                                    EntityReference keyResult = new EntityReference(CommonEntities.KEYRESULT, fetchedKeyResults.Entities[i].Id);
+                                                    EntityReference objective = new EntityReference(CommonEntities.OBJECTIVE, objectiveEntity.Id);
+
+                                                    Entity keyResultRatingEntity = new Entity(CommonEntities.KEYRESULTRATING);
+                                                    Plugin.AddAttribute<string>(keyResultRatingEntity, "ink_name", name);
+                                                    Plugin.AddAttribute<EntityReference>(keyResultRatingEntity, "ink_performanceevaluations", performanceEvaluation);
+                                                    Plugin.AddAttribute<EntityReference>(keyResultRatingEntity, "ink_keyresults", keyResult);
+                                                    Plugin.AddAttribute<EntityReference>(keyResultRatingEntity, "ink_objectives", objective);
+                                                    Plugin.AddAttribute<int>(keyResultRatingEntity, "ink_objectivenumbering", objectiveIndex);
+                                                    Plugin.AddAttribute<string>(keyResultRatingEntity, "ink_griddisplayname", objName);
+                                                    Plugin.AddAttribute<string>(keyResultRatingEntity, "ink_srno", SrNo);
+                                                    iOrganizationService.Create(keyResultRatingEntity);
+
+                                                    flag = false;
+                                                }
+                                                else
+                                                {
+                                                    Entity keyResultEntity = fetchedKeyResults.Entities[i - 1];
+                                                    string KRname = Plugin.GetAttributeValue<string>(keyResultEntity, "ink_name");
+                                                    string name = PEName + " " + KRname;
+                                                    keyResultIndex += 0.1m;
+                                                    string SrNo = keyResultIndex.ToString();
+
+                                                    EntityReference performanceEvaluation = new EntityReference(CommonEntities.PERFORMANCEEVALUATION, performanceEvaluationEntity.Id);
+                                                    EntityReference keyResult = new EntityReference(CommonEntities.KEYRESULT, keyResultEntity.Id);
+                                                    EntityReference objective = new EntityReference(CommonEntities.OBJECTIVE, objectiveEntity.Id);
+
+                                                    Entity keyResultRatingEntity = new Entity(CommonEntities.KEYRESULTRATING);
+                                                    Plugin.AddAttribute<string>(keyResultRatingEntity, "ink_name", name);
+                                                    Plugin.AddAttribute<EntityReference>(keyResultRatingEntity, "ink_performanceevaluations", performanceEvaluation);
+                                                    Plugin.AddAttribute<EntityReference>(keyResultRatingEntity, "ink_keyresults", keyResult);
+                                                    Plugin.AddAttribute<EntityReference>(keyResultRatingEntity, "ink_objectives", objective);
+                                                    Plugin.AddAttribute<decimal>(keyResultRatingEntity, "ink_keyresultnumbering", keyResultIndex);
+                                                    Plugin.AddAttribute<string>(keyResultRatingEntity, "ink_griddisplayname", KRname);
+                                                    Plugin.AddAttribute<string>(keyResultRatingEntity, "ink_srno", SrNo);
+                                                    iOrganizationService.Create(keyResultRatingEntity);
+
+                                                }
                                             }
                                         }
 

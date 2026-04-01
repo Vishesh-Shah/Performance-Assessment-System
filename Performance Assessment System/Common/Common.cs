@@ -21,6 +21,8 @@ namespace Performance_Assessment_System.Common
         public const string OBJECTIVE = "ink_objectives";
         public const string KEYRESULT = "ink_keyresults";
 
+        public const string KEYRESULTRATING = "ink_keyresultratings";
+
         public struct Resource
         {
             public const string INK_RESOURCEID = "ink_resourceid";
