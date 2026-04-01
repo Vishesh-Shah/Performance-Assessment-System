@@ -55,7 +55,7 @@ namespace Performance_Assessment_System.Project_Matrix.Audit
 
                             // Link the child items to the parent audit we are trying to save 
                             checklistQueryExpression.Criteria.AddCondition("ink_audit", ConditionOperator.Equal, auditEntity.Id);
-
+                            iTracingService.Trace("Executing query to retrieve checklist items for audit with ID: {0}", auditEntity.Id);
                             EntityCollection checklistItemEntityCollection = iOrganizationService.RetrieveMultiple(checklistQueryExpression);
 
                             // Loop through every checklist item found
@@ -88,17 +88,17 @@ namespace Performance_Assessment_System.Project_Matrix.Audit
                                 "task",                             // Primary entity of the query
                                 "ink_checklistitem",           // Entity we are joining to
                                 "regardingobjectid",                // Lookup column on the Task
-                                "ink_name",         // Primary Key column on the Checklist Item
+                                "ink_checklistitemid",         // Primary Key column on the Checklist Item
                                 JoinOperator.Inner
                             );
 
                             // Filter the joined Checklist Items to only include ones for THIS Audit
                             checklistLink.LinkCriteria.AddCondition("ink_audit", ConditionOperator.Equal, auditEntity.Id);
-
+                           
                             openTaskQueryExpression.LinkEntities.Add(checklistLink);
 
                             // Execute the single, highly-optimized query
-                            EntityCollection openTasksEntityCollection = iOrganizationService.RetrieveMultiple(openTaskQuery);
+                            EntityCollection openTasksEntityCollection = iOrganizationService.RetrieveMultiple(openTaskQueryExpression);
 
                             if (openTasksEntityCollection.Entities.Count > 0)
                             {
@@ -116,10 +116,10 @@ namespace Performance_Assessment_System.Project_Matrix.Audit
                             if (currentAudit.Contains("ink_project"))
                             {
                                 // Extract the lookup reference to the Parent Project
-                                EntityReference parentProjectRef = Plugin.GetAttributeValue<EntityReference>(auditEntity,"ink_project");
+                                EntityReference parentProjectRef = Plugin.GetAttributeValue<EntityReference>(currentAudit,"ink_project");
 
                                 // 3. Create an object for the Parent Project and update the date
-                                Entity projectToUpdate = new Entity(parentProjectRef.LogicalName);
+                                Entity projectToUpdate = new Entity(CommonEntities.PROJECT);
                                 projectToUpdate.Id = parentProjectRef.Id;
 
                                 // REPLACE "ink_lastauditdate" with the actual logical name of the date column on your Project table
