@@ -11,7 +11,7 @@ using System.Web.Services.Description;
 
 namespace Performance_Assessment_System.Project_Matrix.Checklist_Items
 {
-    public class PostCkecklistItemsUpdateCreateCorrectiveTask :IPlugin
+    public class PreCkecklistItemsUpdateCreateCorrectiveTask :IPlugin
     {
         #region Variable Declaration
         private const string preImageAlias = "PreChecklistItemUpdateCreateCorrectiveTaskPreImage";

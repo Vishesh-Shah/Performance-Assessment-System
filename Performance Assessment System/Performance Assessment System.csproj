@@ -134,7 +134,7 @@
     <Compile Include="Performance Hub\Resource\PreResourceCreateValidateDuplicateResource.cs" />
     <Compile Include="Performance Hub\Resource\PreResourceOnActionCreatePerformanceEvaluations.cs" />
     <Compile Include="Performance Hub\Resource\PreResourceUpdateValidateDuplicateResource.cs" />
-    <Compile Include="Project Matrix\Checklist Items\PostCkecklistItemsUpdateCreateCorrectiveTask.cs" />
+    <Compile Include="Project Matrix\Checklist Items\PreCkecklistItemsUpdateCreateCorrectiveTask.cs" />
     <Compile Include="Project Matrix\Project\PreProjectCreateUpdateSetNextAuditDate.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
