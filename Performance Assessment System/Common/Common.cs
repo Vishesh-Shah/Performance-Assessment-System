@@ -40,6 +40,7 @@ namespace Performance_Assessment_System.Common
 
         public struct PerformanceEvaluationTemplate
         {
+            
             public const string INK_DESIGNATION = "ink_designation";
             public const string INK_PERFORMANCEREVIEWCYCLE = "ink_performancereviewcycle";
         }
@@ -52,8 +53,22 @@ namespace Performance_Assessment_System.Common
             public const string INK_ASSESSEE = "ink_assessee";
             public const string INK_ASSESSOR = "ink_assessor";
             public const string INK_PERFORMANCEREVIEWCYCLE = "ink_performancereviewcycle";
+
+            public struct StatusField
+            {
+                public const int Q1Submitted = 826460000;
+                public const int Q1Acknowledged= 826460001;
+                public const int Q2Submitted = 826460002;
+                public const int Q2Acknowledged = 826460003;    
+                public const int Q3Submitted = 826460004;
+                public const int Q3Acknowledged = 826460005;    
+                public const int Q4Submitted = 826460006;
+                public const int Q4Acknowledged = 826460007;    
+            }
         }
     }
+
+    
     public struct Status 
     {
        
