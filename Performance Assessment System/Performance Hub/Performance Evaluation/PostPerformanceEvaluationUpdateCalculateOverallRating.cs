@@ -15,6 +15,7 @@ namespace Performance_Assessment_System.Performance_Hub.Performance_Evaluation
         #region Variable Declaration
 
         private const string preImageAlias = "PostPerformanceEvaluationUpdateCalculateOverallRatingPreImage";
+        
 
         #endregion
 
@@ -57,14 +58,14 @@ namespace Performance_Assessment_System.Performance_Hub.Performance_Evaluation
                                 coreQuery.ColumnSet.AddColumns("ink_quarter1rating");
                                 coreQuery.Criteria.AddCondition("ink_performanceevaluations", ConditionOperator.Equal, performanceEvaluationEntity.Id);
                                 EntityCollection coreExpectationRatings = iOrganizationService.RetrieveMultiple(coreQuery);
+
                                 
-                                decimal overallRating = 0;
-                                decimal totalRatings = 0;
-                                decimal numberOfFrequency = 0;
                                 if (coreExpectationRatings.Entities.Count > 0)
-                                {
-                                    foreach (Entity core in coreExpectationRatings.Entities) 
-                                    { 
+                                {   int totalRatings = 0;
+                                    int numberOfFrequency = 0;
+                                   
+                                    foreach (Entity core in coreExpectationRatings.Entities)
+                                    {
                                         OptionSetValue quarter1Rating = Plugin.GetAttributeValue<OptionSetValue>(core, "ink_quarter1rating");
                                         if (quarter1Rating != null)
                                         {
@@ -74,15 +75,59 @@ namespace Performance_Assessment_System.Performance_Hub.Performance_Evaluation
                                         }
                                     }
 
-                                    overallRating= Math.Round((totalRatings/numberOfFrequency),2);
-                                    iTracingService.Trace(overallRating.ToString());
+                                    decimal overall = Math.Round((decimal)totalRatings / numberOfFrequency, 2);
+                                    decimal overallPer = Math.Round(((overall / 5.0m) * 100.0m), 2);
+                                    
+                                    string coreExpectationPercentage = overallPer.ToString();
+                                    string quarter1CoreExpectationRating = overall.ToString();
+
+                                    Entity updatedPerformanceEvaluation = new Entity(CommonEntities.PERFORMANCEEVALUATION, performanceEvaluationEntity.Id);
+                                    Plugin.AddAttribute<string>(updatedPerformanceEvaluation, "ink_quarter1coreexpectations", quarter1CoreExpectationRating);
+                                    Plugin.AddAttribute<string>(updatedPerformanceEvaluation, "ink_quater1coreexpectations", coreExpectationPercentage);
+                                    iOrganizationService.Update(updatedPerformanceEvaluation);
+
+
+
                                 }
                             }
+                            QueryExpression keyResultRating = new QueryExpression(CommonEntities.KEYRESULTRATING);
+                            keyResultRating.ColumnSet.AddColumns("ink_quarter1rating", "ink_objectivenumbering");
+                            keyResultRating.Criteria.AddCondition("ink_performanceevaluations", ConditionOperator.Equal, performanceEvaluationEntity.Id);
+                            EntityCollection keyResultRatings = iOrganizationService.RetrieveMultiple(keyResultRating);
+
+                            if (keyResultRatings.Entities.Count > 0)
+                            {
+                                int totalRatings = 0;
+                                int numberOfFrequency = 0;
+                                foreach (Entity keyResult in keyResultRatings.Entities)
+                                {
+                                    OptionSetValue quarter1Rating = Plugin.GetAttributeValue<OptionSetValue>(keyResult, "ink_quarter1rating");
+                                    int objectiveNumbering = Plugin.GetAttributeValue<int>(keyResult, "ink_objectivenumbering");
+                                    if (objectiveNumbering == 0)
+                                    {
+                                        if (quarter1Rating != null)
+                                        {
+                                            totalRatings += (quarter1Rating.Value - 826460000);
+                                            numberOfFrequency++;
+                                        }
+                                    }
 
 
+                                }
+                                decimal overall = Math.Round((decimal)totalRatings / numberOfFrequency, 2);
+                                decimal overallPer = Math.Round(((overall / 5.0m) * 100.0m), 2);
+
+                                string keyResultPercentage = overallPer.ToString();
+                                
+                                string quarter1KeyResultRating = overall.ToString();
+                                Entity updatedPerformanceEvaluation = new Entity(CommonEntities.PERFORMANCEEVALUATION, performanceEvaluationEntity.Id);
+                                Plugin.AddAttribute<string>(updatedPerformanceEvaluation, "ink_quater1objectivekeyresultrating", quarter1KeyResultRating);
+                                Plugin.AddAttribute<string>(updatedPerformanceEvaluation, "ink_quater1objective", keyResultPercentage);
+                                iOrganizationService.Update(updatedPerformanceEvaluation);
+                            }
+                             
+                            
                         }
-
-
                     }
                 }
             }
