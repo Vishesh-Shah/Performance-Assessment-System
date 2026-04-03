@@ -82,9 +82,9 @@ namespace Performance_Assessment_System.Project_Matrix
 
                                 #region Calculate Next Audit Date
                                 DateTime nextAuditDate;
-
+                              
                                 DateTime lastAuditDate = Plugin.GetAttributeValue<DateTime>(projectEntity, projectPreImage, "ink_lastauditdate");
-                                if(lastAuditDate == null)
+                                if (lastAuditDate == DateTime.MinValue) 
                                 {
                                     nextAuditDate= DateTime.UtcNow;
                                 }
