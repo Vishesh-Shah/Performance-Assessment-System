@@ -69,12 +69,43 @@ namespace Performance_Assessment_System.Project_Matrix.Checklist_Items
 
                         if (rating == 1 || rating == 2)
                         {
+                            string questionText = "Unknown Question";
+                            string projectName = "Unknown Project";
+                            // Step 1: Retrieve the full Checklist Item to get its Name and the Audit Lookup
+                            Entity fullChecklistItem = iOrganizationService.Retrieve(checklistItemEntity.LogicalName, checklistItemEntity.Id, new ColumnSet("ink_name", "ink_audit"));
+
+                            if (fullChecklistItem.Contains("ink_name"))
+                            {
+                                questionText = fullChecklistItem.GetAttributeValue<string>("ink_name");
+                            }
+
+                            // Step 2: Extract the Audit Lookup and retrieve the Audit to get the Project
+                            if (fullChecklistItem.Contains("ink_audit"))
+                            {
+                                EntityReference auditRef = fullChecklistItem.GetAttributeValue<EntityReference>("ink_audit");
+
+                                // Retrieve the Parent Audit just to get the Project Lookup
+                                Entity parentAudit = iOrganizationService.Retrieve(auditRef.LogicalName, auditRef.Id, new ColumnSet("ink_project"));
+
+                                if (parentAudit.Contains("ink_project"))
+                                {
+                                    EntityReference projectRef = parentAudit.GetAttributeValue<EntityReference>("ink_project");
+
+                                    // DATA-VERSE MAGIC TRICK: When you retrieve a Lookup, Dataverse automatically 
+                                    // attaches the text name of the record to the '.Name' property!
+                                    projectName = projectRef.Name;
+                                }
+                            }
+                            // ==================================================
                             #region Create Corrective Task from Task Entity if it  does not exists for the Checklist Item  
                             if (existingTaskEntityCollection.Entities.Count == 0)
                             {
                                 Entity correctiveTaskEntity = new Entity("task");
                                 correctiveTaskEntity["subject"] = $"Corrective Action Required: Low Audit Score ({rating})";
-                                correctiveTaskEntity["description"] = "An audit checklist item received a critical score. Please review and take corrective action.";
+                                correctiveTaskEntity["description"] = $"A critical score ({rating}) was recorded during an audit.\n\n" +
+                                                                        $"Project: {projectName}\n" +
+                                                                        $"Question: {questionText}\n\n" +
+                                                                        $"Please review this item and take immediate corrective action.";
                                 correctiveTaskEntity["scheduledend"] = DateTime.UtcNow.AddDays(5);
 
                                 // Link it using your preferred method!
