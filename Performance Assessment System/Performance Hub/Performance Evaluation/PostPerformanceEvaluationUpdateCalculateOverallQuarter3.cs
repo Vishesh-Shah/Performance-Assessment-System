@@ -52,7 +52,7 @@ namespace Performance_Assessment_System.Performance_Hub.Performance_Evaluation
                         if (statusField != null)
                         {
                             int statusFieldValue = statusField.Value;
-                            if (statusFieldValue == CommonEntities.PerformanceEvaluation.StatusField.Q1Submitted)
+                            if (statusFieldValue == CommonEntities.PerformanceEvaluation.StatusField.Q3Submitted)
                             {
                                 QueryExpression coreQuery = new QueryExpression(CommonEntities.COREEXPECTATIONRATING);
                                 coreQuery.ColumnSet.AddColumns("ink_quarter3rating");
