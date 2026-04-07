@@ -57,14 +57,15 @@ namespace Performance_Assessment_System.Project_Matrix
                         {
                             #region Get  Frequency Days from Audit Frequency Matrix
                             // Only retrieve the specific column we need (Frequency Days) to keep the query fast
-                            QueryExpression frequencyDayQueryExpression = new QueryExpression(CommonEntities.AUDITFREQUENCYMATRIX,LogicalOperator.And);
+                            QueryExpression frequencyDayQueryExpression = new QueryExpression(CommonEntities.AUDITFREQUENCYMATRIX);
                             frequencyDayQueryExpression.ColumnSet = new ColumnSet("ink_auditfrequencydays");
-          
+
 
                             // 3. Add the conditions
-                            frequencyDayQueryExpression.Criteria.AddCondition("ink_projectcriticality", ConditionOperator.Equal, criticalityOptionSet.Value);
-                            frequencyDayQueryExpression.Criteria.AddCondition("ink_projectsize", ConditionOperator.Equal, sizeOptionSet.Value);
-
+                            FilterExpression frequencyDayFilterExpression = new FilterExpression(LogicalOperator.And);
+                            frequencyDayFilterExpression.AddCondition("ink_projectcriticality", ConditionOperator.Equal, criticalityOptionSet.Value);
+                            frequencyDayFilterExpression.AddCondition("ink_projectsize", ConditionOperator.Equal, sizeOptionSet.Value);
+                            frequencyDayQueryExpression.Criteria.AddFilter(frequencyDayFilterExpression);
                             // 4. Execute the query
                             EntityCollection frequencyDayEntityCollection = iOrganizationService.RetrieveMultiple(frequencyDayQueryExpression);
                             #endregion

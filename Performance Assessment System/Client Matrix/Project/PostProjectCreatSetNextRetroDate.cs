@@ -30,21 +30,21 @@ namespace Performance_Assessment_System.Client_Matrix.Project
                 {
                     Entity projectEntity = (Entity)iPluginExecutionContext.InputParameters["Target"];
 
-                    if (target != null)
+                    if (projectEntity != null)
                     {
                         // Retrieve full project record with required fields using helper method
-                        Entity projectEntity = Plugin.FetchEntityRecord(projectEntity.LogicalName, projectEntity.Id,
+                        Entity fullProjectEntity = Plugin.FetchEntityRecord(projectEntity.LogicalName, projectEntity.Id,
                             new ColumnSet("createdon", "ink_retrofrequency"), iOrganizationService);
 
-                        if (projectEntity != null)
+                        if (fullProjectEntity != null)
                         {
                             // ink_retrofrequency is Whole Number (int) - use GetAttributeValue<int>
-                            int frequencyDays = Plugin.GetAttributeValue<int>(projectEntity, "ink_retrofrequency");
+                            int frequencyDays = Plugin.GetAttributeValue<int>(fullProjectEntity, "ink_retrofrequency");
 
                             if (frequencyDays > 0)
                             {
                                 // Get created on date using helper method
-                                DateTime createdOn = Plugin.GetAttributeValue<DateTime>(projectEntity, "createdon");
+                                DateTime createdOn = Plugin.GetAttributeValue<DateTime>(fullProjectEntity, "createdon");
 
                                 // Step 1: Calculate next retro date = created on + frequency days
                                 DateTime nextRetroDate = createdOn.AddDays(frequencyDays);
@@ -63,7 +63,7 @@ namespace Performance_Assessment_System.Client_Matrix.Project
 
                                 // Update next retro date on project record using helper method
                                 Entity projectUpdateEntity = new Entity(CommonEntities.PROJECT);
-                                projectUpdateEntity.Id = projectEntity.Id;
+                                projectUpdateEntity.Id = fullProjectEntity.Id;
                                 Plugin.AddAttribute(projectUpdateEntity, "ink_nextretrodate", nextRetroDate);
                                 iOrganizationService.Update(projectUpdateEntity);
                             }
@@ -73,7 +73,6 @@ namespace Performance_Assessment_System.Client_Matrix.Project
             }
             catch (Exception ex)
             {
-                Plugin.TraceLog("Error: " + ex.Message, tracingService);
                 throw new InvalidPluginExecutionException(ex.Message);
             }
         }

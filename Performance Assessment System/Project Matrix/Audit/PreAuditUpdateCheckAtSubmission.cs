@@ -62,12 +62,12 @@ namespace Performance_Assessment_System.Project_Matrix.Audit
                             foreach (Entity checklistItem in checklistItemEntityCollection.Entities)
                             {
                                 // Extract the rating. If it's totally blank, default our check to 0
-                                int rating = checklistItem.Contains("ink_rating") ? Plugin.GetAttributeValue<int>(CommonEntities.CHECKLISTITEM,"ink_rating") : 0;
+                                int rating = checklistItem.Contains("ink_rating") ? Plugin.GetAttributeValue<int>(checklistItem,"ink_rating") : 0;
 
                                 // If any item has a rating of 0 (or wasn't filled out), block the submission!
                                 if (rating == 0)
                                 {
-                                    string itemName = checklistItem.Contains("ink_name") ? Plugin.GetAttributeValue<string>(CommonEntities.CHECKLISTITEM, "ink_name") : "an unknown item";
+                                    string itemName = checklistItem.Contains("ink_name") ? Plugin.GetAttributeValue<string>(checklistItem, "ink_name") : "an unknown item";
 
                                     // This throws a red error banner on the user's screen and cancels the database save
                                     throw new InvalidPluginExecutionException($"Cannot submit audit! The checklist item '{itemName}' has not been scored. Please grade all items before submitting.");

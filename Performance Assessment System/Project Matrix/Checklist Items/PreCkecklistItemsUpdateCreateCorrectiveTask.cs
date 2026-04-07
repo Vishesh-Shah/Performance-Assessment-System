@@ -87,7 +87,7 @@ namespace Performance_Assessment_System.Project_Matrix.Checklist_Items
                                 // Retrieve the Parent Audit just to get the Project Lookup
                                 Entity parentAuditEntity = Plugin.FetchEntityRecord(auditEntityReference.LogicalName, auditEntityReference.Id, new ColumnSet("ink_project"),iOrganizationService);
 
-                                if (parentAudit.Contains("ink_project"))
+                                if (parentAuditEntity.Contains("ink_project"))
                                 {
                                     EntityReference projectEntityReference = Plugin.GetAttributeValue<EntityReference>(parentAuditEntity,"ink_project");
 

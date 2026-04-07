@@ -33,18 +33,18 @@ namespace Performance_Assessment_System.Client_Matrix.Client
                     if (clientEntity != null)
                     {
                         // Retrieve full client record with required fields using helper method
-                        Entity clientEntity = Plugin.FetchEntityRecord(clientEntity.LogicalName, clientEntity.Id,
+                        Entity fullClientEntity = Plugin.FetchEntityRecord(clientEntity.LogicalName, clientEntity.Id,
                             new ColumnSet("createdon", "ink_retrofrequency"), iOrganizationService);
 
-                        if (clientEntity != null)
+                        if (fullClientEntity != null)
                         {
                             // ink_retrofrequency is Whole Number (int) - use GetAttributeValue<int>
-                            int frequencyDays = Plugin.GetAttributeValue<int>(clientEntity, "ink_retrofrequency");
+                            int frequencyDays = Plugin.GetAttributeValue<int>(fullClientEntity, "ink_retrofrequency");
 
                             if (frequencyDays > 0)
                             {
                                 // Get created on date using helper method
-                                DateTime createdOn = Plugin.GetAttributeValue<DateTime>(clientEntity, "createdon");
+                                DateTime createdOn = Plugin.GetAttributeValue<DateTime>(fullClientEntity, "createdon");
 
                                 // Step 1: Calculate next retro date = created on + frequency days
                                 DateTime nextRetroDate = createdOn.AddDays(frequencyDays);
@@ -63,7 +63,7 @@ namespace Performance_Assessment_System.Client_Matrix.Client
 
                                 // Update next retro date on client record using helper method
                                 Entity clientUpdateEntity = new Entity(CommonEntities.CLIENT);
-                                clientUpdateEntity.Id = clientEntity.Id;
+                                clientUpdateEntity.Id = fullClientEntity.Id;
                                 Plugin.AddAttribute(clientUpdateEntity, "ink_nextretrodate", nextRetroDate);
                                 iOrganizationService.Update(clientUpdateEntity);
                             }
