@@ -60,7 +60,7 @@ namespace Performance_Assessment_System.Performance_Hub.Resource
                     // until the transaction commits, so we track them here too).
                     // Key format: assesseeId_assessorId_cycleId
                     HashSet<string> processedCombinations = new HashSet<string>();
-
+                    EntityReference performanceReviewCycleEntityReference = null;
                     foreach (Entity resourceEntity in lstResourceRecords.Entities)
                     {
                         // ── Step 2: Skip resource if no Reporting Manager ─────────
@@ -105,7 +105,7 @@ namespace Performance_Assessment_System.Performance_Hub.Resource
                         // ── Step 5: Get Cycle from the matched template ────────────
                         Entity templateEntity = lstTemplateRecords.Entities[0];
 
-                        EntityReference performanceReviewCycleEntityReference = Plugin.GetAttributeValue<EntityReference>(templateEntity, CommonEntities.PerformanceEvaluationTemplate.INK_PERFORMANCEREVIEWCYCLE);
+                         performanceReviewCycleEntityReference = Plugin.GetAttributeValue<EntityReference>(templateEntity, CommonEntities.PerformanceEvaluationTemplate.INK_PERFORMANCEREVIEWCYCLE);
 
                         if (performanceReviewCycleEntityReference == null)
                         {
@@ -177,6 +177,9 @@ namespace Performance_Assessment_System.Performance_Hub.Resource
 
                         Plugin.TraceLog("Performance Evaluation created: " + performanceEvaluationName, iTracingService);
                     }
+                    OrganizationRequest organizationRequest = new OrganizationRequest("ink_SendRMConsolidatedMail");
+                    organizationRequest["PerformanceReviewCycleId"] = performanceReviewCycleEntityReference.Id.ToString();
+                    iOrganizationService.Execute(organizationRequest);
                 }
             }
             catch (Exception ex)
