@@ -1,6 +1,7 @@
 ﻿using Inkey.MSCRM.Plugin_V9._0.Common;
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Query;
+using Performance_Assessment_System.Common;
 using System;
 
 namespace Performance_Assessment_System.Client_Matrix.ProjectRetro
@@ -36,7 +37,7 @@ namespace Performance_Assessment_System.Client_Matrix.ProjectRetro
 
             try
             {
-                if (Plugin.ValidateTargetAsEntity("ink_projectretro", iPluginExecutionContext))
+                if (Plugin.ValidateTargetAsEntity(CommonEntities.PROJECTRETRO, iPluginExecutionContext))
                 {
                     Entity projectRetroEntity = (Entity)iPluginExecutionContext.InputParameters["Target"];
 
@@ -83,7 +84,7 @@ namespace Performance_Assessment_System.Client_Matrix.ProjectRetro
                                         }
 
                                         // Update next retro date on project record
-                                        Entity projectUpdateEntity = new Entity("ink_project");
+                                        Entity projectUpdateEntity = new Entity(CommonEntities.PROJECT);
                                         projectUpdateEntity.Id = projectEntityReference.Id;
                                         Plugin.AddAttribute(projectUpdateEntity, "ink_nextretrodate", nextRetroDate);
                                         iOrganizationService.Update(projectUpdateEntity);

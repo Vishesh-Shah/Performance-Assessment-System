@@ -1,6 +1,7 @@
 ﻿using Inkey.MSCRM.Plugin_V9._0.Common;
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Query;
+using Performance_Assessment_System.Common;
 using System;
 
 namespace Performance_Assessment_System.Client_Matrix.ClientRetro
@@ -29,13 +30,13 @@ namespace Performance_Assessment_System.Client_Matrix.ClientRetro
             {
                 if (iPluginExecutionContext.Depth > 1)
                 {
-                    Plugin.TraceLog("Plugin stopped because Depth > 1", iTracingService);
+                  
                     return;
                 }
 
-                if (!Plugin.ValidateTargetAsEntity("ink_clientretro", iPluginExecutionContext))
+                if (!Plugin.ValidateTargetAsEntity(CommonEntities.CLIENTRETRO, iPluginExecutionContext))
                 {
-                    Plugin.TraceLog("Target is not valid for entity ink_clientretro", iTracingService);
+                    
                     return;
                 }
 
@@ -43,7 +44,7 @@ namespace Performance_Assessment_System.Client_Matrix.ClientRetro
 
                 if (clientRetroEntity == null)
                 {
-                    Plugin.TraceLog("Target entity is null.", iTracingService);
+                   
                     return;
                 }
 
@@ -52,15 +53,15 @@ namespace Performance_Assessment_System.Client_Matrix.ClientRetro
 
                 if (clientEntityReference == null)
                 {
-                    Plugin.TraceLog("Client lookup is null.", iTracingService);
+                   
                     return;
                 }
 
-                Plugin.TraceLog("Client Id : " + clientEntityReference.Id.ToString(), iTracingService);
+               
 
                 // Workflow definition id from URL
                 Guid workflowDefinitionId = new Guid("2a97303f-1129-f111-8341-000d3a3ac0a7");
-                Plugin.TraceLog("Workflow Definition Id : " + workflowDefinitionId.ToString(), iTracingService);
+               
 
                 // Retrieve workflow record to get active workflow id using helper method
                 Entity workflowEntity = Plugin.FetchEntityRecord("workflow", workflowDefinitionId,
@@ -68,7 +69,7 @@ namespace Performance_Assessment_System.Client_Matrix.ClientRetro
 
                 if (workflowEntity == null)
                 {
-                    Plugin.TraceLog("Workflow record not found.", iTracingService);
+                    
                     return;
                 }
 
@@ -80,13 +81,13 @@ namespace Performance_Assessment_System.Client_Matrix.ClientRetro
                 if (activeWorkflowEntityReference != null)
                 {
                     activeWorkflowId = activeWorkflowEntityReference.Id;
-                    Plugin.TraceLog("Active Workflow Id : " + activeWorkflowId.ToString(), iTracingService);
+                  
                 }
                 else
                 {
                     // Fallback: use definition id if activeworkflowid is not populated
                     activeWorkflowId = workflowDefinitionId;
-                    Plugin.TraceLog("Active Workflow Id not found. Fallback to Definition Id : " + activeWorkflowId.ToString(), iTracingService);
+                   
                 }
 
                 // Query pending workflow jobs for this client record
@@ -118,14 +119,14 @@ namespace Performance_Assessment_System.Client_Matrix.ClientRetro
 
                 EntityCollection pendingWorkflowJobCollection = iOrganizationService.RetrieveMultiple(asyncOperationQueryExpression);
 
-                Plugin.TraceLog("Pending workflow jobs found : " + pendingWorkflowJobCollection.Entities.Count, iTracingService);
+              
 
                 foreach (Entity asyncJobEntity in pendingWorkflowJobCollection.Entities)
                 {
                     // Get job name using helper method
                     string jobName = Plugin.GetStringAttributeValue(asyncJobEntity, null, "name");
 
-                    Plugin.TraceLog("Cancelling workflow job : " + jobName + " | " + asyncJobEntity.Id.ToString(), iTracingService);
+                  
 
                     // Cancel the async job by setting statecode = Completed and statuscode = Canceled
                     Entity asyncJobUpdateEntity = new Entity(Entities.ASYNC_OPERATION, asyncJobEntity.Id);
@@ -133,7 +134,7 @@ namespace Performance_Assessment_System.Client_Matrix.ClientRetro
                     Plugin.AddAttribute(asyncJobUpdateEntity, "statuscode", new OptionSetValue(32)); // Canceled
                     iOrganizationService.Update(asyncJobUpdateEntity);
 
-                    Plugin.TraceLog("Workflow job canceled successfully : " + asyncJobEntity.Id.ToString(), iTracingService);
+                    
                 }
             }
             catch (Exception ex)

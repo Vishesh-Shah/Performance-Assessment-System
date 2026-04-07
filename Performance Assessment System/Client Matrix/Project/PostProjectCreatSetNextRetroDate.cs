@@ -2,6 +2,7 @@
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Query;
 using Inkey.MSCRM.Plugin_V9._0.Common;
+using Performance_Assessment_System.Common;
 
 namespace Performance_Assessment_System.Client_Matrix.Project
 {
@@ -9,31 +10,31 @@ namespace Performance_Assessment_System.Client_Matrix.Project
     {
         public void Execute(IServiceProvider iServiceProvider)
         {
-            IPluginExecutionContext context =
-                (IPluginExecutionContext)iServiceProvider.GetService(typeof(IPluginExecutionContext));
+            // Obtain the execution context from the service provider.
+            IPluginExecutionContext iPluginExecutionContext = (IPluginExecutionContext)iServiceProvider.GetService(typeof(IPluginExecutionContext));
 
-            IOrganizationServiceFactory factory =
-                (IOrganizationServiceFactory)iServiceProvider.GetService(typeof(IOrganizationServiceFactory));
+            // Obtain the organization service factory reference.
+            IOrganizationServiceFactory iOrganizationServiceFactory = (IOrganizationServiceFactory)iServiceProvider.GetService(typeof(IOrganizationServiceFactory));
 
-            ITracingService tracingService =
-                (ITracingService)iServiceProvider.GetService(typeof(ITracingService));
+            // Obtain the tracing service reference.
+            ITracingService iTracingService = (ITracingService)iServiceProvider.GetService(typeof(ITracingService));
 
-            IOrganizationService service =
-                factory.CreateOrganizationService(context.UserId);
+            // Obtain the organization service reference.
+            IOrganizationService iOrganizationService = iOrganizationServiceFactory.CreateOrganizationService(iPluginExecutionContext.UserId);
 
             try
             {
-                tracingService.Trace("PostProjectCreateSetNextRetroDate plugin execution started.");
+               
 
-                if (Plugin.ValidateTargetAsEntity("ink_project", context))
+                if (Plugin.ValidateTargetAsEntity(CommonEntities.PROJECT, iPluginExecutionContext))
                 {
-                    Entity target = (Entity)context.InputParameters["Target"];
+                    Entity projectEntity = (Entity)iPluginExecutionContext.InputParameters["Target"];
 
                     if (target != null)
                     {
                         // Retrieve full project record with required fields using helper method
-                        Entity projectEntity = Plugin.FetchEntityRecord("ink_project", target.Id,
-                            new ColumnSet("createdon", "ink_retrofrequency"), service);
+                        Entity projectEntity = Plugin.FetchEntityRecord(projectEntity.LogicalName, projectEntity.Id,
+                            new ColumnSet("createdon", "ink_retrofrequency"), iOrganizationService);
 
                         if (projectEntity != null)
                         {
@@ -61,10 +62,10 @@ namespace Performance_Assessment_System.Client_Matrix.Project
                                 }
 
                                 // Update next retro date on project record using helper method
-                                Entity projectUpdateEntity = new Entity("ink_project");
+                                Entity projectUpdateEntity = new Entity(CommonEntities.PROJECT);
                                 projectUpdateEntity.Id = projectEntity.Id;
                                 Plugin.AddAttribute(projectUpdateEntity, "ink_nextretrodate", nextRetroDate);
-                                service.Update(projectUpdateEntity);
+                                iOrganizationService.Update(projectUpdateEntity);
                             }
                         }
                     }

@@ -20,6 +20,9 @@ namespace Performance_Assessment_System.Common
         public const string CHECKLISTITEM = "ink_checklistitem";
         public const string TASK = "task";
 
+        public const string CLIENT = "ink_client";
+        public const string CLIENTRETRO = "ink_clientretro";
+        public const string PROJECTRETRO = "ink_projectretro";
 
         public const string OBJECTIVE = "ink_objectives";
         public const string KEYRESULT = "ink_keyresults";

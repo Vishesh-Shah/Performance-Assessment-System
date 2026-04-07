@@ -1,6 +1,7 @@
 ﻿using Inkey.MSCRM.Plugin_V9._0.Common;
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Query;
+using Performance_Assessment_System.Common;
 using System;
 
 namespace Performance_Assessment_System.Client_Matrix.ClientRetro
@@ -36,7 +37,7 @@ namespace Performance_Assessment_System.Client_Matrix.ClientRetro
 
             try
             {
-                if (Plugin.ValidateTargetAsEntity("ink_clientretro", iPluginExecutionContext))
+                if (Plugin.ValidateTargetAsEntity(CommonEntities.CLIENTRETRO, iPluginExecutionContext))
                 {
                     Entity clientRetroEntity = (Entity)iPluginExecutionContext.InputParameters["Target"];
 
@@ -57,7 +58,7 @@ namespace Performance_Assessment_System.Client_Matrix.ClientRetro
                             if (clientEntityReference != null)
                             {
                                 // Retrieve client record to get current frequency days
-                                Entity clientEntity = Plugin.FetchEntityRecord("ink_client", clientEntityReference.Id,
+                                Entity clientEntity = Plugin.FetchEntityRecord(clientEntityReference.LogicalName, clientEntityReference.Id,
                                     new ColumnSet("ink_retrofrequency"), iOrganizationService);
 
                                 if (clientEntity != null)
@@ -83,7 +84,7 @@ namespace Performance_Assessment_System.Client_Matrix.ClientRetro
                                         }
 
                                         // Update next retro date on client record
-                                        Entity clientUpdateEntity = new Entity("ink_client");
+                                        Entity clientUpdateEntity = new Entity(CommonEntities.CLIENT);
                                         clientUpdateEntity.Id = clientEntityReference.Id;
                                         Plugin.AddAttribute(clientUpdateEntity, "ink_nextretrodate", nextRetroDate);
                                         iOrganizationService.Update(clientUpdateEntity);

@@ -2,6 +2,7 @@
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Query;
 using Inkey.MSCRM.Plugin_V9._0.Common;
+using Performance_Assessment_System.Common;
 
 namespace Performance_Assessment_System.Client_Matrix.Client
 {
@@ -9,32 +10,31 @@ namespace Performance_Assessment_System.Client_Matrix.Client
     {
         public void Execute(IServiceProvider iServiceProvider)
         {
-            // ✅ Correct service initialization
-            IPluginExecutionContext context =
-                (IPluginExecutionContext)iServiceProvider.GetService(typeof(IPluginExecutionContext));
+            // Obtain the execution context from the service provider.
+            IPluginExecutionContext iPluginExecutionContext = (IPluginExecutionContext)iServiceProvider.GetService(typeof(IPluginExecutionContext));
 
-            IOrganizationServiceFactory factory =
-                (IOrganizationServiceFactory)iServiceProvider.GetService(typeof(IOrganizationServiceFactory));
+            // Obtain the organization service factory reference.
+            IOrganizationServiceFactory iOrganizationServiceFactory = (IOrganizationServiceFactory)iServiceProvider.GetService(typeof(IOrganizationServiceFactory));
 
-            ITracingService tracingService =
-                (ITracingService)iServiceProvider.GetService(typeof(ITracingService));
+            // Obtain the tracing service reference.
+            ITracingService iTracingService = (ITracingService)iServiceProvider.GetService(typeof(ITracingService));
 
-            IOrganizationService service =
-                factory.CreateOrganizationService(context.UserId);
+            // Obtain the organization service reference.
+            IOrganizationService iOrganizationService = iOrganizationServiceFactory.CreateOrganizationService(iPluginExecutionContext.UserId);
 
             try
             {
-                tracingService.Trace("PostClientCreatSetNextRetroDate plugin execution started.");
+               
 
-                if (Plugin.ValidateTargetAsEntity("ink_client", context))
+                if (Plugin.ValidateTargetAsEntity(CommonEntities.CLIENT,iPluginExecutionContext))
                 {
-                    Entity target = (Entity)context.InputParameters["Target"];
+                    Entity clientEntity = (Entity)iPluginExecutionContext.InputParameters["Target"];
 
-                    if (target != null)
+                    if (clientEntity != null)
                     {
                         // Retrieve full client record with required fields using helper method
-                        Entity clientEntity = Plugin.FetchEntityRecord("ink_client", target.Id,
-                            new ColumnSet("createdon", "ink_retrofrequency"), service);
+                        Entity clientEntity = Plugin.FetchEntityRecord(clientEntity.LogicalName, clientEntity.Id,
+                            new ColumnSet("createdon", "ink_retrofrequency"), iOrganizationService);
 
                         if (clientEntity != null)
                         {
@@ -62,10 +62,10 @@ namespace Performance_Assessment_System.Client_Matrix.Client
                                 }
 
                                 // Update next retro date on client record using helper method
-                                Entity clientUpdateEntity = new Entity("ink_client");
+                                Entity clientUpdateEntity = new Entity(CommonEntities.CLIENT);
                                 clientUpdateEntity.Id = clientEntity.Id;
                                 Plugin.AddAttribute(clientUpdateEntity, "ink_nextretrodate", nextRetroDate);
-                                service.Update(clientUpdateEntity);
+                                iOrganizationService.Update(clientUpdateEntity);
                             }
                         }
                     }
@@ -73,7 +73,7 @@ namespace Performance_Assessment_System.Client_Matrix.Client
             }
             catch (Exception ex)
             {
-                Plugin.TraceLog("Error: " + ex.Message, tracingService);
+             
                 throw new InvalidPluginExecutionException(ex.Message);
             }
         }

@@ -48,6 +48,8 @@ namespace Performance_Assessment_System.Project_Matrix.Checklist_Items
                     if (checklistItemEntity != null && checklistItemPreImage != null)
                     {
                         int rating = Plugin.GetAttributeValue<int>(checklistItemEntity, checklistItemPreImage, "ink_rating");
+                        string questionText = "Unknown Question";
+                        string projectName = "Unknown Project";
 
                      
 
@@ -69,10 +71,8 @@ namespace Performance_Assessment_System.Project_Matrix.Checklist_Items
 
                         if (rating == 1 || rating == 2)
                         {
-                            string questionText = "Unknown Question";
-                            string projectName = "Unknown Project";
                             // Step 1: Retrieve the full Checklist Item to get its Name and the Audit Lookup
-                            Entity fullChecklistItem = iOrganizationService.Retrieve(checklistItemEntity.LogicalName, checklistItemEntity.Id, new ColumnSet("ink_name", "ink_audit"));
+                            Entity fullChecklistItem = Plugin.FetchEntityRecord(checklistItemEntity.LogicalName, checklistItemEntity.Id, new ColumnSet("ink_name", "ink_audit"),iOrganizationService);
 
                             if (fullChecklistItem.Contains("ink_name"))
                             {
@@ -82,18 +82,18 @@ namespace Performance_Assessment_System.Project_Matrix.Checklist_Items
                             // Step 2: Extract the Audit Lookup and retrieve the Audit to get the Project
                             if (fullChecklistItem.Contains("ink_audit"))
                             {
-                                EntityReference auditRef = fullChecklistItem.GetAttributeValue<EntityReference>("ink_audit");
+                                EntityReference auditEntityReference = Plugin.GetAttributeValue<EntityReference>(fullChecklistItem,"ink_audit");
 
                                 // Retrieve the Parent Audit just to get the Project Lookup
-                                Entity parentAudit = iOrganizationService.Retrieve(auditRef.LogicalName, auditRef.Id, new ColumnSet("ink_project"));
+                                Entity parentAuditEntity = Plugin.FetchEntityRecord(auditEntityReference.LogicalName, auditEntityReference.Id, new ColumnSet("ink_project"),iOrganizationService);
 
                                 if (parentAudit.Contains("ink_project"))
                                 {
-                                    EntityReference projectRef = parentAudit.GetAttributeValue<EntityReference>("ink_project");
+                                    EntityReference projectEntityReference = Plugin.GetAttributeValue<EntityReference>(parentAuditEntity,"ink_project");
 
                                     // DATA-VERSE MAGIC TRICK: When you retrieve a Lookup, Dataverse automatically 
                                     // attaches the text name of the record to the '.Name' property!
-                                    projectName = projectRef.Name;
+                                    projectName = projectEntityReference.Name;
                                 }
                             }
                             // ==================================================

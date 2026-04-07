@@ -45,45 +45,41 @@ namespace Performance_Assessment_System.Project_Matrix
                 {
                     
                     Entity projectEntity = (Entity)iPluginExecutionContext.InputParameters["Target"];
-                    Entity projectPreImage = Plugin.GetPreEntityImage(iPluginExecutionContext, preImageAlias);
+                    Entity projectEntityPreImage = Plugin.GetPreEntityImage(iPluginExecutionContext, preImageAlias);
                     
                     if (projectEntity != null)
                     {
-                        OptionSetValue criticalityOptionSet = Plugin.GetAttributeValue<OptionSetValue>(projectEntity, projectPreImage, "ink_criticality");
-                        OptionSetValue sizeOptionSet = Plugin.GetAttributeValue<OptionSetValue>(projectEntity, projectPreImage, "ink_size");
+                        OptionSetValue criticalityOptionSet = Plugin.GetAttributeValue<OptionSetValue>(projectEntity, projectEntityPreImage, "ink_criticality");
+                        OptionSetValue sizeOptionSet = Plugin.GetAttributeValue<OptionSetValue>(projectEntity, projectEntityPreImage, "ink_size");
+                        DateTime lastAuditDate = Plugin.GetAttributeValue<DateTime>(projectEntity, projectEntityPreImage, "ink_lastauditdate");
                        
                         if(criticalityOptionSet != null && sizeOptionSet != null)
                         {
                             #region Get  Frequency Days from Audit Frequency Matrix
-                            QueryExpression frequencyDayQuery = new QueryExpression(CommonEntities.AUDITFREQUENCYMATRIX)
-                            {
-                                // Only retrieve the specific column we need (Frequency Days) to keep the query fast
-                                ColumnSet = new ColumnSet("ink_auditfrequencydays"),
-
-                                // Set up the logical AND filter
-                                Criteria = new FilterExpression(LogicalOperator.And)
-                            };
+                            // Only retrieve the specific column we need (Frequency Days) to keep the query fast
+                            QueryExpression frequencyDayQueryExpression = new QueryExpression(CommonEntities.AUDITFREQUENCYMATRIX,LogicalOperator.And);
+                            frequencyDayQueryExpression.ColumnSet = new ColumnSet("ink_auditfrequencydays");
+          
 
                             // 3. Add the conditions
-                            frequencyDayQuery.Criteria.AddCondition("ink_projectcriticality", ConditionOperator.Equal, criticalityOptionSet.Value);
-                            frequencyDayQuery.Criteria.AddCondition("ink_projectsize", ConditionOperator.Equal, sizeOptionSet.Value);
+                            frequencyDayQueryExpression.Criteria.AddCondition("ink_projectcriticality", ConditionOperator.Equal, criticalityOptionSet.Value);
+                            frequencyDayQueryExpression.Criteria.AddCondition("ink_projectsize", ConditionOperator.Equal, sizeOptionSet.Value);
 
                             // 4. Execute the query
-                            EntityCollection frequencyDayResults = iOrganizationService.RetrieveMultiple(frequencyDayQuery);
+                            EntityCollection frequencyDayEntityCollection = iOrganizationService.RetrieveMultiple(frequencyDayQueryExpression);
                             #endregion
                             // 5. Process the result
-                            if (frequencyDayResults.Entities.Count > 0)
+                            if (frequencyDayEntityCollection.Entities.Count > 0)
                             {
                                 // Grab the first matching record
-                                Entity frequencyEntity = frequencyDayResults.Entities[0];
+                                Entity frequencyEntity = frequencyDayEntityCollection.Entities[0];
 
                                 // Extract the Frequency Days integer
-                                int frequencyDays = frequencyEntity.GetAttributeValue<int>("ink_auditfrequencydays");
+                                int frequencyDays = Plugin.GetAttributeValue<int>(frequencyEntity,"ink_auditfrequencydays");
 
                                 #region Calculate Next Audit Date
                                 DateTime nextAuditDate;
                               
-                                DateTime lastAuditDate = Plugin.GetAttributeValue<DateTime>(projectEntity, projectPreImage, "ink_lastauditdate");
                                 if (lastAuditDate == DateTime.MinValue) 
                                 {
                                     nextAuditDate= DateTime.UtcNow;
