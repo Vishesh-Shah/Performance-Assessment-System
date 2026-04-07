@@ -7,14 +7,7 @@ using System.Collections.Generic;
 
 namespace Performance_Assessment_System.Performance_Hub.Resource
 {
-    /// <summary>
-    /// Pre-Operation Action Plugin on Create Performance Evaluations Action triggered from Resource form ribbon button.
-    /// Loops all active resources, checks for duplicate Performance Evaluations (same Assessee + Assessor + Cycle),
-    /// and creates Performance Evaluation records only where no duplicate exists.
-    /// Duplicate check uses both in-memory HashSet (same-transaction guard) and DB query (previous-run guard).
-    /// Filter Attribute: N/A (Action trigger)
-    /// Pre-Image Alias: N/A (Action trigger)
-    /// </summary>
+   
     public class PreResourceOnActionCreatePerformanceEvaluations : IPlugin
     {
         #region Variable Declaration
@@ -25,9 +18,12 @@ namespace Performance_Assessment_System.Performance_Hub.Resource
 
         #region Execute
         /// <summary>
-        /// Retrieves all active resources, finds matching evaluation template by designation,
-        /// performs in-memory + database duplicate check on Assessee + Assessor + Cycle,
-        /// and creates Performance Evaluation if no duplicate found.
+        /// Pre-Operation Action Plugin on Create Performance Evaluations Action triggered from Resource form ribbon button.
+        /// Loops all active resources, checks for duplicate Performance Evaluations (same Assessee + Assessor + Cycle),
+        /// and creates Performance Evaluation records only where no duplicate exists.
+        /// Duplicate check uses both in-memory HashSet (same-transaction guard) and DB query (previous-run guard).
+        /// Filter Attribute: N/A (Action trigger)
+        /// Pre-Image Alias: N/A (Action trigger)
         /// </summary>
         public void Execute(IServiceProvider iServiceProvider)
         {

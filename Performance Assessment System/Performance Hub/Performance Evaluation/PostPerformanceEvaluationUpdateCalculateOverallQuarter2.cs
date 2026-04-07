@@ -23,7 +23,8 @@ namespace Performance_Assessment_System.Performance_Hub.Performance_Evaluation
 
         #region Execute
         /// <summary>
-        /// 
+        /// calculating overall rating and percentage for quarter 2 (core expectations + key results)
+        /// pre-image fields: ["ink_statusfield"]
         /// </summary>
         public void Execute(IServiceProvider iServiceProvider)
         {
@@ -48,12 +49,16 @@ namespace Performance_Assessment_System.Performance_Hub.Performance_Evaluation
 
                     if (performanceEvaluationPreImage != null)
                     {
+                        // getting status field to check quarter condition
                         OptionSetValue statusField = Plugin.GetAttributeValue<OptionSetValue>(performanceEvaluationEntity, performanceEvaluationPreImage, "ink_statusfield");
                         if (statusField != null)
                         {
                             int statusFieldValue = statusField.Value;
+
+                            // checking if Q2 is acknowledged
                             if (statusFieldValue == CommonEntities.PerformanceEvaluation.StatusField.Q2Acknowledged)
                             {
+                                // fetching all core expectation ratings for Q2
                                 QueryExpression coreQuery = new QueryExpression(CommonEntities.COREEXPECTATIONRATING);
                                 coreQuery.ColumnSet.AddColumns("ink_quarter2rating");
                                 coreQuery.Criteria.AddCondition("ink_performanceevaluations", ConditionOperator.Equal, performanceEvaluationEntity.Id);
@@ -65,6 +70,7 @@ namespace Performance_Assessment_System.Performance_Hub.Performance_Evaluation
                                     int totalRatings = 0;
                                     int numberOfFrequency = 0;
 
+                                    // calculating total core expectation ratings
                                     foreach (Entity core in coreExpectationRatings.Entities)
                                     {
                                         OptionSetValue quarter2Rating = Plugin.GetAttributeValue<OptionSetValue>(core, "ink_quarter2rating");
@@ -76,12 +82,14 @@ namespace Performance_Assessment_System.Performance_Hub.Performance_Evaluation
                                         }
                                     }
 
+                                    // calculating average and percentage
                                     decimal overall = Math.Round((decimal)totalRatings / numberOfFrequency, 2);
                                     decimal overallPer = Math.Round(((overall / 5.0m) * 100.0m), 2);
 
                                     string coreExpectationPercentage = overallPer.ToString();
                                     string quarter2CoreExpectationRating = overall.ToString();
 
+                                    // updating performance evaluation with Q2 core expectation values
                                     Entity updatedPerformanceEvaluation = new Entity(CommonEntities.PERFORMANCEEVALUATION, performanceEvaluationEntity.Id);
                                     Plugin.AddAttribute<string>(updatedPerformanceEvaluation, "ink_quarter2coreexpectations", quarter2CoreExpectationRating);
                                     Plugin.AddAttribute<string>(updatedPerformanceEvaluation, "ink_quater2coreexpectations", coreExpectationPercentage);
@@ -91,6 +99,8 @@ namespace Performance_Assessment_System.Performance_Hub.Performance_Evaluation
 
                                 }
                             }
+
+                            // fetching all key result ratings for Q2
                             QueryExpression keyResultRating = new QueryExpression(CommonEntities.KEYRESULTRATING);
                             keyResultRating.ColumnSet.AddColumns("ink_quarter2rating", "ink_objectivenumbering");
                             keyResultRating.Criteria.AddCondition("ink_performanceevaluations", ConditionOperator.Equal, performanceEvaluationEntity.Id);
@@ -100,29 +110,35 @@ namespace Performance_Assessment_System.Performance_Hub.Performance_Evaluation
                             {
                                 int totalRatings = 0;
                                 int numberOfFrequency = 0;
+
+                                // calculating total key result ratings only for objectives
                                 foreach (Entity keyResult in keyResultRatings.Entities)
                                 {
-                                    OptionSetValue quarter1Rating = Plugin.GetAttributeValue<OptionSetValue>(keyResult, "ink_quarter2rating");
+                                    OptionSetValue quarter2Rating = Plugin.GetAttributeValue<OptionSetValue>(keyResult, "ink_quarter2rating");
                                     int objectiveNumbering = Plugin.GetAttributeValue<int>(keyResult, "ink_objectivenumbering");
                                     if (objectiveNumbering == 0)
                                     {
-                                        if (quarter1Rating != null)
+                                        if (quarter2Rating != null)
                                         {
-                                            totalRatings += (quarter1Rating.Value - 826460000);
+                                            totalRatings += (quarter2Rating.Value - 826460000);
                                             numberOfFrequency++;
                                         }
                                     }
 
 
                                 }
+
+                                // calculating average and percentage
                                 decimal overall = Math.Round((decimal)totalRatings / numberOfFrequency, 2);
                                 decimal overallPer = Math.Round(((overall / 5.0m) * 100.0m), 2);
 
                                 string keyResultPercentage = overallPer.ToString();
 
-                                string quarter1KeyResultRating = overall.ToString();
+                                string quarter2KeyResultRating = overall.ToString();
+
+                                // updating performance evaluation with Q2 objective and key result values
                                 Entity updatedPerformanceEvaluation = new Entity(CommonEntities.PERFORMANCEEVALUATION, performanceEvaluationEntity.Id);
-                                Plugin.AddAttribute<string>(updatedPerformanceEvaluation, "ink_quater2objectivekeyresultrating", quarter1KeyResultRating);
+                                Plugin.AddAttribute<string>(updatedPerformanceEvaluation, "ink_quater2objectivekeyresultrating", quarter2KeyResultRating);
                                 Plugin.AddAttribute<string>(updatedPerformanceEvaluation, "ink_quater2objective", keyResultPercentage);
                                 iOrganizationService.Update(updatedPerformanceEvaluation);
                             }
