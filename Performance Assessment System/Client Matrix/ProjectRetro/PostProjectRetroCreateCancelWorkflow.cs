@@ -128,8 +128,8 @@ namespace Performance_Assessment_System.Client_Matrix.ProjectRetro
 
                     // Cancel the async job by setting statecode = Completed and statuscode = Canceled
                     Entity asyncJobUpdateEntity = new Entity(Entities.ASYNC_OPERATION, asyncJobEntity.Id);
-                    Plugin.AddAttribute(asyncJobUpdateEntity, "statecode", new OptionSetValue(3));   // Completed
-                    Plugin.AddAttribute(asyncJobUpdateEntity, "statuscode", new OptionSetValue(32)); // Canceled
+                    Plugin.AddAttribute(asyncJobUpdateEntity, "statecode", new OptionSetValue(SystemJobStatus.COMPLETED));   // Completed
+                    Plugin.AddAttribute(asyncJobUpdateEntity, "statuscode", new OptionSetValue(SystemJobStatusReason.CANCELED)); // Canceled
                     iOrganizationService.Update(asyncJobUpdateEntity);
 
                 }
