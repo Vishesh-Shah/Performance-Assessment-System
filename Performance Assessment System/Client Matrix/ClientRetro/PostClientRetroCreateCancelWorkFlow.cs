@@ -30,13 +30,13 @@ namespace Performance_Assessment_System.Client_Matrix.ClientRetro
             {
                 if (iPluginExecutionContext.Depth > 1)
                 {
-                  
+
                     return;
                 }
 
                 if (!Plugin.ValidateTargetAsEntity(CommonEntities.CLIENTRETRO, iPluginExecutionContext))
                 {
-                    
+
                     return;
                 }
 
@@ -44,7 +44,7 @@ namespace Performance_Assessment_System.Client_Matrix.ClientRetro
 
                 if (clientRetroEntity == null)
                 {
-                   
+
                     return;
                 }
 
@@ -53,25 +53,34 @@ namespace Performance_Assessment_System.Client_Matrix.ClientRetro
 
                 if (clientEntityReference == null)
                 {
-                   
+
                     return;
                 }
 
-               
+                // Retrieve workflow definition id from environment variable
+                QueryExpression envVarQueryExpression = new QueryExpression("environmentvariabledefinition");
+                envVarQueryExpression.ColumnSet = new ColumnSet("environmentvariabledefinitionid");
+                envVarQueryExpression.Criteria.AddCondition("schemaname", ConditionOperator.Equal, "ink_clientretroworkflowid");
 
-                // Workflow definition id from URL
-                Guid workflowDefinitionId = new Guid("2a97303f-1129-f111-8341-000d3a3ac0a7");
-               
+                // 1: child table we are joining to get the actual value 
+                // 2: first "environmentvariabledefinitionid" — this is the column on the parent table (environmentvariabledefinition) used to join
+                // 3: second "environmentvariabledefinitionid" — this is the column on the child table (environmentvariablevalue) used to join
+
+                LinkEntity envVarValueLinkEntity = envVarQueryExpression.AddLink(
+                    "environmentvariablevalue", "environmentvariabledefinitionid", "environmentvariabledefinitionid");
+                envVarValueLinkEntity.Columns = new ColumnSet("value");
+                envVarValueLinkEntity.EntityAlias = "envval";
+
+                EntityCollection envVarCollection = iOrganizationService.RetrieveMultiple(envVarQueryExpression);
+
+                // Get environment variable value using helper method
+                string workflowDefinitionIdString = Plugin.GetAttributeValueFromAliasedValue<string>(envVarCollection.Entities[0], "envval.value");
+
+                Guid workflowDefinitionId = new Guid(workflowDefinitionIdString);
 
                 // Retrieve workflow record to get active workflow id using helper method
                 Entity workflowEntity = Plugin.FetchEntityRecord("workflow", workflowDefinitionId,
                     new ColumnSet("workflowid", "name", "activeworkflowid", "statecode", "statuscode"), iOrganizationService);
-
-                if (workflowEntity == null)
-                {
-                    
-                    return;
-                }
 
                 // Get active workflow id from workflow entity using helper method
                 EntityReference activeWorkflowEntityReference = Plugin.GetAttributeValue<EntityReference>(workflowEntity, "activeworkflowid");
@@ -81,13 +90,13 @@ namespace Performance_Assessment_System.Client_Matrix.ClientRetro
                 if (activeWorkflowEntityReference != null)
                 {
                     activeWorkflowId = activeWorkflowEntityReference.Id;
-                  
+
                 }
                 else
                 {
                     // Fallback: use definition id if activeworkflowid is not populated
                     activeWorkflowId = workflowDefinitionId;
-                   
+
                 }
 
                 // Query pending workflow jobs for this client record
@@ -113,28 +122,26 @@ namespace Performance_Assessment_System.Client_Matrix.ClientRetro
 
                 // Only waiting / ready jobs
                 FilterExpression stateFilterExpression = new FilterExpression(LogicalOperator.Or);
-                stateFilterExpression.AddCondition("statecode", ConditionOperator.Equal, 0); // Ready
-                stateFilterExpression.AddCondition("statecode", ConditionOperator.Equal, 1); // Suspended
+                stateFilterExpression.AddCondition("statecode", ConditionOperator.Equal, SystemJobStatus.READY); // Ready
+                stateFilterExpression.AddCondition("statecode", ConditionOperator.Equal, SystemJobStatus.SUSPENDED); // Suspended
                 asyncOperationQueryExpression.Criteria.AddFilter(stateFilterExpression);
 
                 EntityCollection pendingWorkflowJobCollection = iOrganizationService.RetrieveMultiple(asyncOperationQueryExpression);
 
-              
+
 
                 foreach (Entity asyncJobEntity in pendingWorkflowJobCollection.Entities)
                 {
                     // Get job name using helper method
                     string jobName = Plugin.GetStringAttributeValue(asyncJobEntity, null, "name");
-
-                  
-
+                    
                     // Cancel the async job by setting statecode = Completed and statuscode = Canceled
                     Entity asyncJobUpdateEntity = new Entity(Entities.ASYNC_OPERATION, asyncJobEntity.Id);
-                    Plugin.AddAttribute(asyncJobUpdateEntity, "statecode", new OptionSetValue(3));   // Completed
-                    Plugin.AddAttribute(asyncJobUpdateEntity, "statuscode", new OptionSetValue(32)); // Canceled
+                    Plugin.AddAttribute(asyncJobUpdateEntity, "statecode", new OptionSetValue(SystemJobStatus.COMPLETED));   // Completed
+                    Plugin.AddAttribute(asyncJobUpdateEntity, "statuscode", new OptionSetValue(SystemJobStatusReason.CANCELED)); // Canceled
                     iOrganizationService.Update(asyncJobUpdateEntity);
 
-                    
+
                 }
             }
             catch (Exception ex)

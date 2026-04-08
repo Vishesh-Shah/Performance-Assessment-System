@@ -75,12 +75,27 @@ namespace Performance_Assessment_System.Common
     
     public struct Status 
     {
-       
-        
             public const int NEW = 826460000;
             public const int STARTED = 826460001;
             public const int SUBMITTED = 826460002;
             public const int CLOSED = 826460003;
+
+    }
+
+    public struct SystemJobStatus
+    {
+        public const int READY = 0;
+        public const int SUSPENDED = 1;
+        public const int LOCKED = 2;
+        public const int COMPLETED = 3;
+
+    }♥
+
+    public struct SystemJobStatusReason
+    {
+        public const int SUCCEEDED = 30;
+        public const int FAILED = 31;
+        public const int CANCELED = 32;
 
     }
 }
