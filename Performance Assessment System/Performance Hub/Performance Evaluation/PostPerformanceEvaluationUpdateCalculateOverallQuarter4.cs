@@ -3,10 +3,6 @@ using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Query;
 using Performance_Assessment_System.Common;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Performance_Assessment_System.Performance_Hub.Performance_Evaluation
 {
