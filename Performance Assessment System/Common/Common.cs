@@ -31,7 +31,8 @@ namespace Performance_Assessment_System.Common
 
         public const string COREEXPECTATION = "ink_coreexpectations";
         public const string COREEXPECTATIONRATING = "ink_coreexpectationratings";
-
+        public const string STATUSCODE = "statuscode";
+        public const string STATECODE = "statecode";
         public struct Resource
         {
             public const string INK_RESOURCEID = "ink_resourceid";
