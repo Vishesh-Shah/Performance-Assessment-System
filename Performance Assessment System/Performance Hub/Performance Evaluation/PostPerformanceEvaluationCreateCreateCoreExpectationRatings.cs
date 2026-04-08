@@ -45,9 +45,11 @@ namespace Performance_Assessment_System.Performance_Hub.Performance_Evaluation
                     if( performanceEvaluationEntity != null )
                     {
                         //fetching all core expectation records
-                        QueryExpression query = new QueryExpression(CommonEntities.COREEXPECTATION);
-                        query.ColumnSet.AddColumns("ink_name");
-                        EntityCollection fetchedCoreExpectations = iOrganizationService.RetrieveMultiple(query);
+                        QueryExpression coreExpectationQueryExpression = new QueryExpression(CommonEntities.COREEXPECTATION);
+                        coreExpectationQueryExpression.ColumnSet.AddColumns("ink_name");
+                        EntityCollection fetchedCoreExpectations = iOrganizationService.RetrieveMultiple(coreExpectationQueryExpression);
+
+                        string PEname, CEname, name = null;
 
                         if(fetchedCoreExpectations.Entities.Count > 0)
                         {
@@ -55,9 +57,9 @@ namespace Performance_Assessment_System.Performance_Hub.Performance_Evaluation
                             {
                                 #region Creating a Core Expectation Rating Record
 
-                                string PEname = Plugin.GetAttributeValue<string>(performanceEvaluationEntity, "ink_name");
-                                string CEname = Plugin.GetAttributeValue<string>(coreExpectationEntity, "ink_name");
-                                string name = PEname + " " + CEname;
+                                PEname = Plugin.GetAttributeValue<string>(performanceEvaluationEntity, "ink_name");
+                                CEname = Plugin.GetAttributeValue<string>(coreExpectationEntity, "ink_name");
+                                name = PEname + " " + CEname;
 
                                 EntityReference performanceEvaluation = new EntityReference(CommonEntities.PERFORMANCEEVALUATION, performanceEvaluationEntity.Id);
                                 EntityReference coreExpectation = new EntityReference(CommonEntities.COREEXPECTATION, coreExpectationEntity.Id);
