@@ -89,7 +89,7 @@ namespace Performance_Assessment_System.Common
         public const int LOCKED = 2;
         public const int COMPLETED = 3;
 
-    }♥
+    }
 
     public struct SystemJobStatusReason
     {
