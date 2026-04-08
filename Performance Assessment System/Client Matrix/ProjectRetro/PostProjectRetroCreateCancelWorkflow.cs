@@ -57,20 +57,30 @@ namespace Performance_Assessment_System.Client_Matrix.ProjectRetro
                     return;
                 }
 
-            
+                // Retrieve workflow definition id from environment variable
+                QueryExpression envVarQueryExpression = new QueryExpression("environmentvariabledefinition");
+                envVarQueryExpression.ColumnSet = new ColumnSet("environmentvariabledefinitionid");
+                envVarQueryExpression.Criteria.AddCondition("schemaname", ConditionOperator.Equal, "ink_projectretroworkflowid");
 
-                // Workflow definition id - get this from the URL of the workflow record
-                Guid workflowDefinitionId = new Guid("b8457006-f12b-f111-88b4-000d3a3ac0a7");
-               
+                // 1: child table we are joining to get the actual value 
+                // 2: first "environmentvariabledefinitionid" — this is the column on the parent table (environmentvariabledefinition) used to join
+                // 3: second "environmentvariabledefinitionid" — this is the column on the child table (environmentvariablevalue) used to join
+
+                LinkEntity envVarValueLinkEntity = envVarQueryExpression.AddLink(
+                    "environmentvariablevalue", "environmentvariabledefinitionid", "environmentvariabledefinitionid");
+                envVarValueLinkEntity.Columns = new ColumnSet("value");
+                envVarValueLinkEntity.EntityAlias = "envval";
+
+                EntityCollection envVarCollection = iOrganizationService.RetrieveMultiple(envVarQueryExpression);
+
+                // Get environment variable value using helper method
+                string workflowDefinitionIdString = Plugin.GetAttributeValueFromAliasedValue<string>(envVarCollection.Entities[0], "envval.value");
+
+                Guid workflowDefinitionId = new Guid(workflowDefinitionIdString);
+
                 // Retrieve workflow record to get active workflow id using helper method
                 Entity workflowEntity = Plugin.FetchEntityRecord("workflow", workflowDefinitionId,
                     new ColumnSet("workflowid", "name", "activeworkflowid", "statecode", "statuscode"), iOrganizationService);
-
-                if (workflowEntity == null)
-                {
-                    
-                    return;
-                }
 
                 // Get active workflow id from workflow entity using helper method
                 EntityReference activeWorkflowEntityReference = Plugin.GetAttributeValue<EntityReference>(workflowEntity, "activeworkflowid");
@@ -112,8 +122,8 @@ namespace Performance_Assessment_System.Client_Matrix.ProjectRetro
 
                 // Only waiting / ready jobs
                 FilterExpression stateFilterExpression = new FilterExpression(LogicalOperator.Or);
-                stateFilterExpression.AddCondition("statecode", ConditionOperator.Equal, 0); // Ready
-                stateFilterExpression.AddCondition("statecode", ConditionOperator.Equal, 1); // Suspended
+                stateFilterExpression.AddCondition("statecode", ConditionOperator.Equal, SystemJobStatus.READY); // Ready
+                stateFilterExpression.AddCondition("statecode", ConditionOperator.Equal, SystemJobStatus.SUSPENDED); // Suspended
                 asyncOperationQueryExpression.Criteria.AddFilter(stateFilterExpression);
 
                 EntityCollection pendingWorkflowJobCollection = iOrganizationService.RetrieveMultiple(asyncOperationQueryExpression);

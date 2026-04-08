@@ -82,12 +82,6 @@ namespace Performance_Assessment_System.Client_Matrix.ClientRetro
                 Entity workflowEntity = Plugin.FetchEntityRecord("workflow", workflowDefinitionId,
                     new ColumnSet("workflowid", "name", "activeworkflowid", "statecode", "statuscode"), iOrganizationService);
 
-                if (workflowEntity == null)
-                {
-
-                    return;
-                }
-
                 // Get active workflow id from workflow entity using helper method
                 EntityReference activeWorkflowEntityReference = Plugin.GetAttributeValue<EntityReference>(workflowEntity, "activeworkflowid");
 
@@ -128,8 +122,8 @@ namespace Performance_Assessment_System.Client_Matrix.ClientRetro
 
                 // Only waiting / ready jobs
                 FilterExpression stateFilterExpression = new FilterExpression(LogicalOperator.Or);
-                stateFilterExpression.AddCondition("statecode", ConditionOperator.Equal, 0); // Ready
-                stateFilterExpression.AddCondition("statecode", ConditionOperator.Equal, 1); // Suspended
+                stateFilterExpression.AddCondition("statecode", ConditionOperator.Equal, SystemJobStatus.READY); // Ready
+                stateFilterExpression.AddCondition("statecode", ConditionOperator.Equal, SystemJobStatus.SUSPENDED); // Suspended
                 asyncOperationQueryExpression.Criteria.AddFilter(stateFilterExpression);
 
                 EntityCollection pendingWorkflowJobCollection = iOrganizationService.RetrieveMultiple(asyncOperationQueryExpression);
