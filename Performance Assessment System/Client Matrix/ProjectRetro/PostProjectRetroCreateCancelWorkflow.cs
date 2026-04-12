@@ -60,7 +60,7 @@ namespace Performance_Assessment_System.Client_Matrix.ProjectRetro
                 // Retrieve workflow definition id from environment variable
                 QueryExpression envVarQueryExpression = new QueryExpression("environmentvariabledefinition");
                 envVarQueryExpression.ColumnSet = new ColumnSet("environmentvariabledefinitionid");
-                envVarQueryExpression.Criteria.AddCondition("schemaname", ConditionOperator.Equal, "ink_projectretroworkflowid");
+                envVarQueryExpression.Criteria.AddCondition("schemaname", ConditionOperator.Equal, "ink_env_projectretroworkflowid");
 
                 // 1: child table we are joining to get the actual value 
                 // 2: first "environmentvariabledefinitionid" — this is the column on the parent table (environmentvariabledefinition) used to join
