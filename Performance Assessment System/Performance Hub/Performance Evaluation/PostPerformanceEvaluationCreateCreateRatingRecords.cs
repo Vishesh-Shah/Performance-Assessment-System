@@ -70,8 +70,8 @@ namespace Performance_Assessment_System.Performance_Hub.Performance_Evaluation
 
                                 #region QueryExpression to get Objectives
 
-                                QueryExpression templateQuery = new QueryExpression(CommonEntities.OBJECTIVE);
-                                templateQuery.ColumnSet = new ColumnSet("ink_name", "ink_objectivesid");
+                                QueryExpression templateQueryExpression = new QueryExpression(CommonEntities.OBJECTIVE);
+                                templateQueryExpression.ColumnSet = new ColumnSet("ink_name", "ink_objectivesid");
 
                                 // Link to intersect table
                                 LinkEntity linkIntersect = new LinkEntity(
@@ -100,10 +100,10 @@ namespace Performance_Assessment_System.Performance_Hub.Performance_Evaluation
 
                                 // Chain
                                 linkIntersect.LinkEntities.Add(linkTemplate);
-                                templateQuery.LinkEntities.Add(linkIntersect);
+                                templateQueryExpression.LinkEntities.Add(linkIntersect);
 
                                 // getting the objectives related to the template
-                                EntityCollection fetchedObjectives = iOrganizationService.RetrieveMultiple(templateQuery);
+                                EntityCollection fetchedObjectives = iOrganizationService.RetrieveMultiple(templateQueryExpression);
 
                                 #endregion
 
@@ -112,6 +112,7 @@ namespace Performance_Assessment_System.Performance_Hub.Performance_Evaluation
                                 bool flag = true;
                                 int objectiveIndex = 0;
                                 decimal keyResultIndex = 0m;
+
                                 if (fetchedObjectives.Entities.Count > 0)
                                 {
                                     foreach (Entity objectiveEntity in fetchedObjectives.Entities)
@@ -125,11 +126,11 @@ namespace Performance_Assessment_System.Performance_Hub.Performance_Evaluation
                                         string objName = Plugin.GetAttributeValue<string>(objectiveEntity, "ink_name");
 
                                         //fetching all key results of the current objective
-                                        QueryExpression keyResultQuery = new QueryExpression(CommonEntities.KEYRESULT);
-                                        keyResultQuery.ColumnSet.AddColumns("ink_name");
-                                        keyResultQuery.Criteria.AddCondition("ink_objectives", ConditionOperator.Equal, objectiveEntity.Id);
+                                        QueryExpression keyResultQueryExpression = new QueryExpression(CommonEntities.KEYRESULT);
+                                        keyResultQueryExpression.ColumnSet.AddColumns("ink_name");
+                                        keyResultQueryExpression.Criteria.AddCondition("ink_objectives", ConditionOperator.Equal, objectiveEntity.Id);
 
-                                        EntityCollection fetchedKeyResults = iOrganizationService.RetrieveMultiple(keyResultQuery);
+                                        EntityCollection fetchedKeyResults = iOrganizationService.RetrieveMultiple(keyResultQueryExpression);
 
                                         keyResultIndex += objectiveIndex;
 
