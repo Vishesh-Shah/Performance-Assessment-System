@@ -6,7 +6,7 @@ using Performance_Assessment_System.Common;
 
 namespace Performance_Assessment_System.Client_Matrix.Project
 {
-    public class PreProjectCreateSetNextRetroDate: IPlugin
+    public class PostProjectCreateSetNextRetroDate : IPlugin
     {
         public void Execute(IServiceProvider iServiceProvider)
         {
@@ -24,7 +24,7 @@ namespace Performance_Assessment_System.Client_Matrix.Project
 
             try
             {
-               
+
 
                 if (Plugin.ValidateTargetAsEntity(CommonEntities.PROJECT, iPluginExecutionContext))
                 {
@@ -59,14 +59,9 @@ namespace Performance_Assessment_System.Client_Matrix.Project
                                 }
 
                                 // Update next retro date on project record using helper method
-                                Entity projectUpdateEntity = new Entity(CommonEntities.PROJECT);
-                                projectUpdateEntity.Id = projectEntity.Id;
-                                Plugin.AddAttribute(projectUpdateEntity, "ink_nextretrodate", nextRetroDate);
+                                Entity projectUpdateEntity = new Entity(CommonEntities.PROJECT, projectEntity.Id);
+                                projectUpdateEntity["ink_nextretrodate"] = nextRetroDate;
                                 iOrganizationService.Update(projectUpdateEntity);
-                            }
-                            else
-                            {
-                                throw new Exception("Retro Frequency must be greater than 0");
                             }
                         }
                     }

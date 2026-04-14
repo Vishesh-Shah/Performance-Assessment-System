@@ -124,10 +124,12 @@
   <ItemGroup>
     <Compile Include="Client Matrix\ClientRetro\PostClientRetroCreateCancelWorkFlow.cs" />
     <Compile Include="Client Matrix\ClientRetro\PostClientRetroCreateUpdateSetNextRetroDate.cs" />
-    <Compile Include="Client Matrix\Client\PreClientCreateSetNextRetroDate.cs" />
+    <Compile Include="Client Matrix\Client\PostClientCreateSetNextRetroDate.cs" />
+    <Compile Include="Client Matrix\Client\PreClientCreateValidateRetroFrequency.cs" />
     <Compile Include="Client Matrix\ProjectRetro\PostProjectRetroCreateCancelWorkflow.cs" />
     <Compile Include="Client Matrix\ProjectRetro\PostProjectRetroCreateUpdateSetNextRetroDate.cs" />
-    <Compile Include="Client Matrix\Project\PreProjectCreateSetNextRetroDate.cs" />
+    <Compile Include="Client Matrix\Project\PostProjectCreateSetNextRetroDate.cs" />
+    <Compile Include="Client Matrix\Project\PreProjectCreateValidateRetroFrequency.cs" />
     <Compile Include="Common\Common.cs" />
     <Compile Include="Common\Plugin.cs" />
     <Compile Include="Performance Hub\Performance Evaluation\PostPerformanceEvaluationsUpdateDeactivateEndOfYearAssessment .cs" />

@@ -4,9 +4,10 @@ using Microsoft.Xrm.Sdk.Query;
 using Inkey.MSCRM.Plugin_V9._0.Common;
 using Performance_Assessment_System.Common;
 
+
 namespace Performance_Assessment_System.Client_Matrix.Client
 {
-    public class PreClientCreateSetNextRetroDate : IPlugin
+    public class PostClientCreateSetNextRetroDate : IPlugin
     {
         public void Execute(IServiceProvider iServiceProvider)
         {
@@ -24,26 +25,20 @@ namespace Performance_Assessment_System.Client_Matrix.Client
 
             try
             {
-               
-
-                if (Plugin.ValidateTargetAsEntity(CommonEntities.CLIENT,iPluginExecutionContext))
+                if (Plugin.ValidateTargetAsEntity(CommonEntities.CLIENT, iPluginExecutionContext))
                 {
                     Entity clientEntity = (Entity)iPluginExecutionContext.InputParameters["Target"];
-
                     if (clientEntity != null)
                     {
-                            // ink_retrofrequency is Whole Number (int) - use GetAttributeValue<int>
-                            int frequencyDays = Plugin.GetAttributeValue<int>(clientEntity, "ink_retrofrequency");
-
+                        int frequencyDays = Plugin.GetAttributeValue<int>(clientEntity, "ink_retrofrequency");
                         if (frequencyDays > 0)
                         {
-                            // Get created on date using helper method
                             DateTime createdOn = Plugin.GetAttributeValue<DateTime>(clientEntity, "createdon");
 
-                            // Step 1: Calculate next retro date = created on + frequency days
+                            // Calculate next retro date = created on + frequency days
                             DateTime nextRetroDate = createdOn.AddDays(frequencyDays);
 
-                            // Step 2: Apply weekend adjustment
+                            // Apply weekend adjustment
                             if (nextRetroDate.DayOfWeek == DayOfWeek.Saturday)
                             {
                                 // Saturday → move to Monday
@@ -56,9 +51,8 @@ namespace Performance_Assessment_System.Client_Matrix.Client
                             }
 
                             // Update next retro date on client record using helper method
-                            Entity clientUpdateEntity = new Entity(CommonEntities.CLIENT);
-                            clientUpdateEntity.Id = clientEntity.Id;
-                            Plugin.AddAttribute(clientUpdateEntity, "ink_nextretrodate", nextRetroDate);
+                            Entity clientUpdateEntity = new Entity(CommonEntities.CLIENT, clientEntity.Id);
+                            clientUpdateEntity["ink_nextretrodate"] = nextRetroDate;
                             iOrganizationService.Update(clientUpdateEntity);
                         }
                         else
@@ -70,7 +64,7 @@ namespace Performance_Assessment_System.Client_Matrix.Client
             }
             catch (Exception ex)
             {
-             
+
                 throw new InvalidPluginExecutionException(ex.Message);
             }
         }
