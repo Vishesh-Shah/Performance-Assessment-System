@@ -89,6 +89,10 @@ namespace Performance_Assessment_System.Client_Matrix.ClientRetro
                                         Plugin.AddAttribute(clientUpdateEntity, "ink_nextretrodate", nextRetroDate);
                                         iOrganizationService.Update(clientUpdateEntity);
                                     }
+                                    else
+                                    {
+                                        throw new Exception("Retro Frequency must be greater than 0");
+                                    }
                                 }
                             }
                         }

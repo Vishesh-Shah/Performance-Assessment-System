@@ -58,90 +58,77 @@ namespace Performance_Assessment_System.Client_Matrix.ClientRetro
                 }
 
                 // Retrieve workflow definition id from environment variable
-                QueryExpression envVarQueryExpression = new QueryExpression("environmentvariabledefinition");
-                envVarQueryExpression.ColumnSet = new ColumnSet("environmentvariabledefinitionid");
-                envVarQueryExpression.Criteria.AddCondition("schemaname", ConditionOperator.Equal, "ink_env_clientretroworkflowid");
+                string workflowDefinitionIdString = CommonFunctions.GetEnvironmentVariable(iOrganizationService, "ink_env_clientretroworkflowid");
 
-                // 1: child table we are joining to get the actual value 
-                // 2: first "environmentvariabledefinitionid" — this is the column on the parent table (environmentvariabledefinition) used to join
-                // 3: second "environmentvariabledefinitionid" — this is the column on the child table (environmentvariablevalue) used to join
-
-                LinkEntity envVarValueLinkEntity = envVarQueryExpression.AddLink(
-                    "environmentvariablevalue", "environmentvariabledefinitionid", "environmentvariabledefinitionid");
-                envVarValueLinkEntity.Columns = new ColumnSet("value");
-                envVarValueLinkEntity.EntityAlias = "envval";
-
-                EntityCollection envVarCollection = iOrganizationService.RetrieveMultiple(envVarQueryExpression);
-
-                // Get environment variable value using helper method
-                string workflowDefinitionIdString = Plugin.GetAttributeValueFromAliasedValue<string>(envVarCollection.Entities[0], "envval.value");
-
-                Guid workflowDefinitionId = new Guid(workflowDefinitionIdString);
-
-                // Retrieve workflow record to get active workflow id using helper method
-                Entity workflowEntity = Plugin.FetchEntityRecord("workflow", workflowDefinitionId,
-                    new ColumnSet("workflowid", "name", "activeworkflowid", "statecode", "statuscode"), iOrganizationService);
-
-                // Get active workflow id from workflow entity using helper method
-                EntityReference activeWorkflowEntityReference = Plugin.GetAttributeValue<EntityReference>(workflowEntity, "activeworkflowid");
-
-                Guid activeWorkflowId = Guid.Empty;
-
-                if (activeWorkflowEntityReference != null)
+                if (!string.IsNullOrEmpty(workflowDefinitionIdString))
                 {
-                    activeWorkflowId = activeWorkflowEntityReference.Id;
+                    Guid workflowDefinitionId = new Guid(workflowDefinitionIdString);
 
-                }
-                else
-                {
-                    // Fallback: use definition id if activeworkflowid is not populated
-                    activeWorkflowId = workflowDefinitionId;
+                    // Retrieve workflow record to get active workflow id using helper method
+                    Entity workflowEntity = Plugin.FetchEntityRecord("workflow", workflowDefinitionId,
+                        new ColumnSet("workflowid", "name", "activeworkflowid", "statecode", "statuscode"), iOrganizationService);
 
-                }
+                    // Get active workflow id from workflow entity using helper method
+                    EntityReference activeWorkflowEntityReference = Plugin.GetAttributeValue<EntityReference>(workflowEntity, "activeworkflowid");
 
-                // Query pending workflow jobs for this client record
-                QueryExpression asyncOperationQueryExpression = new QueryExpression(Entities.ASYNC_OPERATION);
-                asyncOperationQueryExpression.ColumnSet = new ColumnSet(
-                    "asyncoperationid",
-                    "name",
-                    "statecode",
-                    "statuscode",
-                    "workflowactivationid",
-                    "regardingobjectid",
-                    "operationtype"
-                );
+                    Guid activeWorkflowId = Guid.Empty;
 
-                // Only workflow jobs
-                asyncOperationQueryExpression.Criteria.AddCondition("operationtype", ConditionOperator.Equal, 10);
+                    if (activeWorkflowEntityReference != null)
+                    {
+                        activeWorkflowId = activeWorkflowEntityReference.Id;
 
-                // Only same client record
-                asyncOperationQueryExpression.Criteria.AddCondition("regardingobjectid", ConditionOperator.Equal, clientEntityReference.Id);
+                    }
+                    else
+                    {
+                        // Fallback: use definition id if activeworkflowid is not populated
+                        activeWorkflowId = workflowDefinitionId;
 
-                // Only this workflow active version
-                asyncOperationQueryExpression.Criteria.AddCondition("workflowactivationid", ConditionOperator.Equal, activeWorkflowId);
+                    }
 
-                // Only waiting / ready jobs
-                FilterExpression stateFilterExpression = new FilterExpression( lOperator.Or);
-                stateFilterExpression.AddCondition("statecode", ConditionOperator.Equal, SystemJobStatus.READY); // Ready
-                stateFilterExpression.AddCondition("statecode", ConditionOperator.Equal, SystemJobStatus.SUSPENDED); // Suspended
-                asyncOperationQueryExpression.Criteria.AddFilter(stateFilterExpression);
+                    // Query pending workflow jobs for this client record
+                    QueryExpression asyncOperationQueryExpression = new QueryExpression(Entities.ASYNC_OPERATION);
+                    asyncOperationQueryExpression.ColumnSet = new ColumnSet(
+                        "asyncoperationid",
+                        "name",
+                        "statecode",
+                        "statuscode",
+                        "workflowactivationid",
+                        "regardingobjectid",
+                        "operationtype"
+                    );
 
-                EntityCollection pendingWorkflowJobCollection = iOrganizationService.RetrieveMultiple(asyncOperationQueryExpression);
+                    // Only workflow jobs
+                    asyncOperationQueryExpression.Criteria.AddCondition("operationtype", ConditionOperator.Equal, 10);
+
+                    // Only same client record
+                    asyncOperationQueryExpression.Criteria.AddCondition("regardingobjectid", ConditionOperator.Equal, clientEntityReference.Id);
+
+                    // Only this workflow active version
+                    asyncOperationQueryExpression.Criteria.AddCondition("workflowactivationid", ConditionOperator.Equal, activeWorkflowId);
+
+                    // Only waiting / ready jobs
+                    FilterExpression stateFilterExpression = new FilterExpression(LogicalOperator.Or);
+                    stateFilterExpression.AddCondition("statecode", ConditionOperator.Equal, SystemJobStatus.READY); // Ready
+                    stateFilterExpression.AddCondition("statecode", ConditionOperator.Equal, SystemJobStatus.SUSPENDED); // Suspended
+                    asyncOperationQueryExpression.Criteria.AddFilter(stateFilterExpression);
+
+                    EntityCollection pendingWorkflowJobCollection = iOrganizationService.RetrieveMultiple(asyncOperationQueryExpression);
 
 
 
-                foreach (Entity asyncJobEntity in pendingWorkflowJobCollection.Entities)
-                {
-                    // Get job name using helper method
-                    string jobName = Plugin.GetStringAttributeValue(asyncJobEntity, null, "name");
-                    
-                    // Cancel the async job by setting statecode = Completed and statuscode = Canceled
-                    Entity asyncJobUpdateEntity = new Entity(Entities.ASYNC_OPERATION, asyncJobEntity.Id);
-                    Plugin.AddAttribute(asyncJobUpdateEntity, "statecode", new OptionSetValue(SystemJobStatus.COMPLETED));   // Completed
-                    Plugin.AddAttribute(asyncJobUpdateEntity, "statuscode", new OptionSetValue(SystemJobStatusReason.CANCELED)); // Canceled
-                    iOrganizationService.Update(asyncJobUpdateEntity);
+                    foreach (Entity asyncJobEntity in pendingWorkflowJobCollection.Entities)
+                    {
+                        // Get job name using helper method
+                        string jobName = Plugin.GetStringAttributeValue(asyncJobEntity, null, "name");
+
+                        // Cancel the async job by setting statecode = Completed and statuscode = Canceled
+                        Entity asyncJobUpdateEntity = new Entity(Entities.ASYNC_OPERATION, asyncJobEntity.Id);
+                        Plugin.AddAttribute(asyncJobUpdateEntity, "statecode", new OptionSetValue(SystemJobStatus.COMPLETED));   // Completed
+                        Plugin.AddAttribute(asyncJobUpdateEntity, "statuscode", new OptionSetValue(SystemJobStatusReason.CANCELED)); // Canceled
+                        iOrganizationService.Update(asyncJobUpdateEntity);
 
 
+                    }
                 }
             }
             catch (Exception ex)

@@ -4,9 +4,9 @@ using Microsoft.Xrm.Sdk.Query;
 using Inkey.MSCRM.Plugin_V9._0.Common;
 using Performance_Assessment_System.Common;
 
-namespace Performance_Assessment_System.Client_Matrix.Client
+namespace Performance_Assessment_System.Client_Matrix.Project
 {
-    public class PostClientCreatSetNextRetroDate : IPlugin
+    public class PreProjectCreateSetNextRetroDate: IPlugin
     {
         public void Execute(IServiceProvider iServiceProvider)
         {
@@ -26,25 +26,22 @@ namespace Performance_Assessment_System.Client_Matrix.Client
             {
                
 
-                if (Plugin.ValidateTargetAsEntity(CommonEntities.CLIENT,iPluginExecutionContext))
+                if (Plugin.ValidateTargetAsEntity(CommonEntities.PROJECT, iPluginExecutionContext))
                 {
-                    Entity clientEntity = (Entity)iPluginExecutionContext.InputParameters["Target"];
+                    Entity projectEntity = (Entity)iPluginExecutionContext.InputParameters["Target"];
 
-                    if (clientEntity != null)
+                    if (projectEntity != null)
                     {
-                        // Retrieve full client record with required fields using helper method
-                        Entity fullClientEntity = Plugin.FetchEntityRecord(clientEntity.LogicalName, clientEntity.Id,
-                            new ColumnSet("createdon", "ink_retrofrequency"), iOrganizationService);
 
-                        if (fullClientEntity != null)
+                        if (projectEntity != null)
                         {
                             // ink_retrofrequency is Whole Number (int) - use GetAttributeValue<int>
-                            int frequencyDays = Plugin.GetAttributeValue<int>(fullClientEntity, "ink_retrofrequency");
+                            int frequencyDays = Plugin.GetAttributeValue<int>(projectEntity, "ink_retrofrequency");
 
                             if (frequencyDays > 0)
                             {
                                 // Get created on date using helper method
-                                DateTime createdOn = Plugin.GetAttributeValue<DateTime>(fullClientEntity, "createdon");
+                                DateTime createdOn = Plugin.GetAttributeValue<DateTime>(projectEntity, "createdon");
 
                                 // Step 1: Calculate next retro date = created on + frequency days
                                 DateTime nextRetroDate = createdOn.AddDays(frequencyDays);
@@ -61,11 +58,15 @@ namespace Performance_Assessment_System.Client_Matrix.Client
                                     nextRetroDate = nextRetroDate.AddDays(1);
                                 }
 
-                                // Update next retro date on client record using helper method
-                                Entity clientUpdateEntity = new Entity(CommonEntities.CLIENT);
-                                clientUpdateEntity.Id = fullClientEntity.Id;
-                                Plugin.AddAttribute(clientUpdateEntity, "ink_nextretrodate", nextRetroDate);
-                                iOrganizationService.Update(clientUpdateEntity);
+                                // Update next retro date on project record using helper method
+                                Entity projectUpdateEntity = new Entity(CommonEntities.PROJECT);
+                                projectUpdateEntity.Id = projectEntity.Id;
+                                Plugin.AddAttribute(projectUpdateEntity, "ink_nextretrodate", nextRetroDate);
+                                iOrganizationService.Update(projectUpdateEntity);
+                            }
+                            else
+                            {
+                                throw new Exception("Retro Frequency must be greater than 0");
                             }
                         }
                     }
@@ -73,7 +74,6 @@ namespace Performance_Assessment_System.Client_Matrix.Client
             }
             catch (Exception ex)
             {
-             
                 throw new InvalidPluginExecutionException(ex.Message);
             }
         }

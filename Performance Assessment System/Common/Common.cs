@@ -1,9 +1,11 @@
-﻿using System;
+﻿using Inkey.MSCRM.Plugin_V9._0.Common;
+using Microsoft.Xrm.Sdk;
+using Microsoft.Xrm.Sdk.Query;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Inkey.MSCRM.Plugin_V9._0.Common;
 
 
 namespace Performance_Assessment_System.Common
@@ -44,7 +46,7 @@ namespace Performance_Assessment_System.Common
 
         public struct PerformanceEvaluationTemplate
         {
-            
+
             public const string INK_DESIGNATION = "ink_designation";
             public const string INK_PERFORMANCEREVIEWCYCLE = "ink_performancereviewcycle";
         }
@@ -52,7 +54,7 @@ namespace Performance_Assessment_System.Common
         public struct PerformanceEvaluation
         {
             public const string INK_PERFORMANCEEVALUATIONSID = "ink_performanceevaluationsid";
-            
+
             public const string INK_NAME = "ink_name";
             public const string INK_ASSESSEE = "ink_assessee";
             public const string INK_ASSESSOR = "ink_assessor";
@@ -61,24 +63,24 @@ namespace Performance_Assessment_System.Common
             public struct StatusField
             {
                 public const int Q1Submitted = 826460000;
-                public const int Q1Acknowledged= 826460001;
+                public const int Q1Acknowledged = 826460001;
                 public const int Q2Submitted = 826460002;
-                public const int Q2Acknowledged = 826460003;    
+                public const int Q2Acknowledged = 826460003;
                 public const int Q3Submitted = 826460004;
-                public const int Q3Acknowledged = 826460005;    
+                public const int Q3Acknowledged = 826460005;
                 public const int Q4Submitted = 826460006;
-                public const int Q4Acknowledged = 826460007;    
+                public const int Q4Acknowledged = 826460007;
             }
         }
     }
 
-    
-    public struct Status 
+
+    public struct Status
     {
-            public const int NEW = 826460000;
-            public const int STARTED = 826460001;
-            public const int SUBMITTED = 826460002;
-            public const int CLOSED = 826460003;
+        public const int NEW = 826460000;
+        public const int STARTED = 826460001;
+        public const int SUBMITTED = 826460002;
+        public const int CLOSED = 826460003;
 
     }
 
@@ -97,5 +99,34 @@ namespace Performance_Assessment_System.Common
         public const int FAILED = 31;
         public const int CANCELED = 32;
 
+    }
+
+    public class CommonFunctions
+    {
+        #region GetEnvironmentVariable
+        /// <summary>
+        /// Retrieves the Default Value of an Environment Variable by its Schema Name.
+        /// </summary>
+        /// <param name="iOrganizationService">IOrganizationService to execute the query.</param>
+        /// <param name="schemaName">The Schema Name of the Environment Variable Definition.</param>
+        /// <returns>The Default Value string, or null if not found.</returns>
+        public static string GetEnvironmentVariable(IOrganizationService iOrganizationService, string schemaName)
+        {
+            QueryExpression envVarQueryExpression = new QueryExpression("environmentvariabledefinition");
+            envVarQueryExpression.ColumnSet = new ColumnSet("defaultvalue");
+            envVarQueryExpression.Criteria.AddCondition("schemaname", ConditionOperator.Equal, schemaName);
+
+            envVarQueryExpression.TopCount = 1;
+
+            EntityCollection envVarCollection = iOrganizationService.RetrieveMultiple(envVarQueryExpression);
+            if (envVarCollection.Entities.Count > 0)
+            {
+                Entity envVarFirstEntity = envVarCollection.Entities[0];
+                return Plugin.GetAttributeValue<string>(envVarFirstEntity, "defaultvalue");
+            }
+
+            return null;
+        }
+        #endregion
     }
 }

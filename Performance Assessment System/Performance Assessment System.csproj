@@ -122,13 +122,12 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Client Matrix\ClientRetro\FileName.cs" />
     <Compile Include="Client Matrix\ClientRetro\PostClientRetroCreateCancelWorkFlow.cs" />
     <Compile Include="Client Matrix\ClientRetro\PostClientRetroCreateUpdateSetNextRetroDate.cs" />
-    <Compile Include="Client Matrix\Client\PostClientCreatSetNextRetroDate.cs" />
+    <Compile Include="Client Matrix\Client\PreClientCreateSetNextRetroDate.cs" />
     <Compile Include="Client Matrix\ProjectRetro\PostProjectRetroCreateCancelWorkflow.cs" />
     <Compile Include="Client Matrix\ProjectRetro\PostProjectRetroCreateUpdateSetNextRetroDate.cs" />
-    <Compile Include="Client Matrix\Project\PostProjectCreatSetNextRetroDate.cs" />
+    <Compile Include="Client Matrix\Project\PreProjectCreateSetNextRetroDate.cs" />
     <Compile Include="Common\Common.cs" />
     <Compile Include="Common\Plugin.cs" />
     <Compile Include="Performance Hub\Performance Evaluation\PostPerformanceEvaluationsUpdateDeactivateEndOfYearAssessment .cs" />
